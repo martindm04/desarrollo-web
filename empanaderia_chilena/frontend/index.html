@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empanadería La Chilena - Catálogo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">🥟 La Chilena</div>
+<nav>
+    <a href="#">Inicio</a>
+    
+    <div id="auth-links" style="display:inline;">
+        <a href="#" onclick="openModal('register-modal')">Registrarse</a>
+        <a href="#" onclick="openModal('login-modal')">Iniciar Sesión</a>
+    </div>
+
+    <div id="user-info" style="display:none; color: white; font-weight: bold; margin-left: 10px;">
+        Hola, <span id="user-name-display">Usuario</span> | 
+        
+        <a href="#" id="admin-link" style="display:none; color: yellow; margin: 0 10px;" onclick="toggleAdminPanel()">⚙️ Admin</a>
+        
+        <a href="#" onclick="logout()" style="font-size:0.8rem; text-decoration:underline; color: white;">Salir</a>
+    </div>
+    
+    <div class="cart-icon" onclick="toggleCart()">
+        🛒 <span id="cart-count">0</span>
+    </div>
+</nav>
+    </header>
+
+    <section class="hero">
+        <h1>Las mejores empanadas de Maipú</h1>
+        <p>De horno y fritas, directo a tu mesa.</p>
+    </section>
+
+    <section class="controls">
+        <input type="text" id="search-bar" placeholder="Buscar empanada (ej. Pino)...">
+        <select id="category-filter">
+            <option value="all">Todas las Categorías</option>
+            <option value="horno">De Horno</option>
+            <option value="frita">Fritas</option>
+            <option value="bebida">Bebidas</option>
+        </select>
+    </section>
+
+    <main>
+        <div id="product-grid" class="grid-container">
+            </div>
+        <div id="no-results" class="hidden">No se encontraron productos 😢</div>
+    </main>
+
+    <div id="cart-overlay" class="cart-overlay" onclick="toggleCart()"></div>
+    <aside id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Tu Pedido</h2>
+            <button class="close-btn" onclick="toggleCart()">✖</button>
+        </div>
+        
+        <div id="cart-items" class="cart-items">
+            <p style="text-align:center; color:#888;">Tu carrito está vacío</p>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-price">$0</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Ir a Pagar</button>
+        </div>
+    </aside>
+
+<section id="admin-panel" class="hidden" style="padding: 2rem; background: #fff3cd;">
+    <h2>⚙️ Gestión de Empanadas</h2>
+
+    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3>Agregar / Editar Producto</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="number" id="adm-id" placeholder="ID (ej: 6)" style="width: 80px;">
+            <input type="text" id="adm-name" placeholder="Nombre (ej: Empanada Mariscos)">
+            <select id="adm-category">
+                <option value="horno">Horno</option>
+                <option value="frita">Frita</option>
+                <option value="bebida">Bebida</option>
+            </select>
+            <input type="number" id="adm-price" placeholder="Precio">
+            <input type="number" id="adm-stock" placeholder="Stock">
+            <input type="text" id="adm-image" placeholder="Nombre imagen (ej: foto.jpg)">
+            <button class="btn-add" style="width: auto; margin: 0;" onclick="saveProduct()">Guardar</button>
+            <button class="btn-add" style="width: auto; margin: 0; background: #666;" onclick="clearAdminForm()">Limpiar</button>
+        </div>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; background: white;">
+        <thead>
+            <tr style="background: #333; color: white; text-align: left;">
+                <th style="padding: 10px;">ID</th>
+                <th style="padding: 10px;">Nombre</th>
+                <th style="padding: 10px;">Precio</th>
+                <th style="padding: 10px;">Stock</th>
+                <th style="padding: 10px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="admin-table-body">
+            </tbody>
+    </table>
+</section>
+
+    <footer>
+        <p>&copy; 2025 Empanadería La Chilena - Maipú</p>
+    </footer>
+<div id="register-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
+        <h2>Crear Cuenta</h2>
+        <input type="text" id="reg-name" placeholder="Nombre Completo">
+        <input type="email" id="reg-email" placeholder="Correo Electrónico">
+        <input type="password" id="reg-pass" placeholder="Contraseña">
+        <button class="btn-add" onclick="registerUser()">Registrarse</button>
+    </div>
+</div>
+
+<div id="login-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal('login-modal')">&times;</span>
+        <h2>Iniciar Sesión</h2>
+        <input type="email" id="login-email" placeholder="Correo Electrónico">
+        <input type="password" id="login-pass" placeholder="Contraseña">
+        <button class="btn-add" onclick="loginUser()">Entrar</button>
+    </div>
+</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
