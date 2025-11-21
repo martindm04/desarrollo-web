@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Empanadería La Chilena</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -36,17 +37,12 @@
     </header>
 
     <section class="carousel" id="main-carousel">
-        <div class="carousel-inner">
-            <div class="carousel-item" style="background-color: #e74c3c;">
-                <h2>🔥 Empanadas Calientes</h2>
+        <button class="carousel-arrow prev" onclick="prevSlide()">&#10094;</button>
+        <button class="carousel-arrow next" onclick="nextSlide()">&#10095;</button>
+        
+        <div class="carousel-inner" id="carousel-track">
             </div>
-            <div class="carousel-item" style="background-color: #f1c40f;">
-                <h2>🧀 Queso Derretido</h2>
-            </div>
-            <div class="carousel-item" style="background-color: #3498db;">
-                <h2>🥤 Bebidas Heladas</h2>
-            </div>
-        </div>
+        <div class="carousel-nav" id="carousel-dots"></div>
     </section>
 
     <section class="controls">
@@ -120,27 +116,45 @@
         </div>
 
         <div id="tab-orders" class="admin-content">
-            <button class="btn-secondary" onclick="loadAdminOrders()" style="margin-bottom:10px;">🔄 Actualizar Ventas</button>
-            <table style="width: 100%; border-collapse: collapse; background: white;">
+            <button class="btn-secondary" onclick="loadAdminOrders()" style="margin-bottom:20px;">🔄 Actualizar Datos</button>
+            
+            <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: var(--shadow); margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px; text-align: center; color: #333;">📊 Productos Más Vendidos</h3>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 10px;">📋 Detalle de Transacciones</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
                 <thead style="background: var(--chile-blue); color: white;">
                     <tr><th>ID Orden</th><th>Cliente</th><th>Total</th><th>Items</th></tr>
                 </thead>
                 <tbody id="admin-orders-body"></tbody>
             </table>
         </div>
+
     </section>
 
     <div id="add-to-cart-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="text-align:center;">
             <span class="close-modal" onclick="closeModal('add-to-cart-modal')">&times;</span>
-            <h2 id="modal-product-name">Agregar Producto</h2>
-            <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin: 20px 0;">
-                <button class="btn-secondary" style="width:40px;" onclick="adjustModalQty(-1)">-</button>
-                <span id="modal-qty" style="font-size:1.5rem; font-weight:bold;">1</span>
-                <button class="btn-secondary" style="width:40px;" onclick="adjustModalQty(1)">+</button>
+            <h2 id="modal-product-name" style="margin-bottom:20px; color:var(--text-main);">Producto</h2>
+            
+            <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:25px;">
+                <button class="qty-btn" onclick="adjustModalQty(-1)">-</button>
+                <span id="modal-qty" style="font-size:2rem; font-weight:bold; color:var(--primary);">1</span>
+                <button class="qty-btn" onclick="adjustModalQty(1)">+</button>
             </div>
-            <button class="btn-primary" onclick="confirmAddFromModal('continue')">Agregar y Seguir Comprando</button>
-            <button class="btn-secondary" onclick="confirmAddFromModal('checkout')">Agregar e Ir al Carrito</button>
+            
+            <div style="display:grid; gap:10px;">
+                <button class="btn-add-card" style="border-radius:10px;" onclick="confirmAddFromModal('continue')">
+                    Agregar y Seguir Mirando
+                </button>
+                <button class="btn-add-card" style="border-radius:10px; background:white; color:var(--primary); border:2px solid var(--primary);" onclick="confirmAddFromModal('checkout')">
+                    Agregar y Pagar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -194,5 +208,32 @@
     <div id="toast-container"></div>
 
     <script src="app.js"></script>
+
+<footer>
+        <div class="footer-content">
+            <div class="footer-col">
+                <h3>🥟 La Chilena</h3>
+                <p>Tradición y sabor en cada bocado. Las mejores empanadas de Maipú directo a tu mesa.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Enlaces Rápidos</h3>
+                <ul>
+                    <li><a href="#">Inicio</a></li>
+                    <li><a href="#">Catálogo</a></li>
+                    <li><a href="#">Nosotros</a></li>
+                    <li><a href="#">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contacto</h3>
+                <p>📍 Av. Pajaritos 1234, Maipú</p>
+                <p>📞 +56 9 1234 5678</p>
+                <p>✉️ contacto@lachilena.cl</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Empanadería La Chilena. Todos los derechos reservados.</p>
+        </div>
+    </footer>
 </body>
 </html>

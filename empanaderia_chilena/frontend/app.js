@@ -31,27 +31,79 @@ function setupGlobalEvents() {
 }
 
 // Punto 2: Carrusel Dinámico (Muestra 3 productos al azar)
+// --- CARRUSEL HERO INTELIGENTE ---
+let carouselInterval;
+
 function loadDynamicCarousel() {
-    const carouselInner = document.querySelector('.carousel-inner');
-    if (!carouselInner || productsDB.length === 0) return;
+    const track = document.getElementById('carousel-track');
+    const dotsContainer = document.getElementById('carousel-dots');
     
-    // Tomar 3 productos aleatorios (o los primeros 3 si hay pocos)
-    const featured = productsDB.sort(() => 0.5 - Math.random()).slice(0, 3);
+    // 1. Filtrar productos que tengan FOTO REAL (URL http) y Stock
+    const candidates = productsDB.filter(p => p.image && p.image.startsWith('http') && p.stock > 0);
     
-    carouselInner.innerHTML = '';
-    const colors = ['#e74c3c', '#f1c40f', '#3498db'];
+    if (candidates.length === 0) {
+        document.getElementById('main-carousel').style.display = 'none';
+        return;
+    }
+
+    // Tomar máximo 3 destacados
+    const featured = candidates.slice(0, 3);
     
+    track.innerHTML = '';
+    dotsContainer.innerHTML = '';
+
     featured.forEach((p, index) => {
+        // Crear Slide
         const item = document.createElement('div');
         item.className = 'carousel-item';
-        item.style.backgroundColor = colors[index % 3];
-        // Si tiene imagen real la usamos de fondo, si no color plano
-        if(p.image.startsWith('http')) {
-            item.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${p.image}')`;
-        }
-        item.innerHTML = `<h2>${p.name} <br> <small>$${p.price}</small></h2>`;
-        carouselInner.appendChild(item);
+        // Fondo sutil basado en categoría
+        const bgColor = p.category === 'horno' ? '#FFF3E0' : (p.category === 'frita' ? '#FFFDE7' : '#E3F2FD');
+        item.style.backgroundColor = bgColor;
+
+        item.innerHTML = `
+            <div class="carousel-text">
+                <span class="badge ${p.category}" style="position:static; display:inline-block; margin-bottom:10px;">${p.category}</span>
+                <h2>${p.name}</h2>
+                <p>Deliciosa preparación artesanal.</p>
+                <span class="price-tag">$${p.price.toLocaleString('es-CL')}</span>
+                <button class="btn-primary" style="width:auto; padding: 12px 30px; font-size:1.1rem;" onclick="openAddToCartModal(${p.id})">
+                    ¡Lo Quiero! 🛒
+                </button>
+            </div>
+            <div class="carousel-image">
+                <img src="${p.image}" alt="${p.name}">
+            </div>
+        `;
+        track.appendChild(item);
+
+        // Crear Punto
+        const dot = document.createElement('div');
+        dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
+        dot.onclick = () => goToSlide(index);
+        dotsContainer.appendChild(dot);
     });
+
+    startCarouselAutoPlay(featured.length);
+}
+
+function goToSlide(index) {
+    const track = document.getElementById('carousel-track');
+    track.style.transform = `translateX(-${index * 100}%)`;
+    
+    // Actualizar puntos
+    document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        d.className = `carousel-dot ${i === index ? 'active' : ''}`;
+    });
+}
+
+function startCarouselAutoPlay(count) {
+    let current = 0;
+    if (carouselInterval) clearInterval(carouselInterval);
+    
+    carouselInterval = setInterval(() => {
+        current = (current + 1) % count;
+        goToSlide(current);
+    }, 5000); // Cambia cada 5 segundos
 }
 
 // --- 3. UTILIDADES ---
@@ -394,25 +446,110 @@ function loadAdminTable() {
 }
 
 // Cargar Ventas (Tabla 2 - Punto 3)
+// Variable global para el gráfico (para poder destruirlo y redibujarlo)
+let myChart = null;
+
 async function loadAdminOrders() {
     const tbody = document.getElementById('admin-orders-body');
-    tbody.innerHTML = '<tr><td colspan="4">Cargando ventas...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando datos...</td></tr>';
+    
     try {
         const res = await fetch('http://127.0.0.1:8000/orders');
         const orders = await res.json();
+        
         tbody.innerHTML = '';
+        
+        // 1. Variables para estadística
+        const salesStats = {}; // { "Empanada Pino": 10, "Bebida": 5 }
+
+        // 2. Procesar órdenes
         orders.forEach(o => {
-            const summary = o.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+            // Llenar tabla
+            const summary = o.items.map(i => {
+                // Sumar para estadística
+                if (salesStats[i.name]) {
+                    salesStats[i.name] += i.quantity;
+                } else {
+                    salesStats[i.name] = i.quantity;
+                }
+                return `${i.quantity}x ${i.name}`;
+            }).join(', ');
+
             const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid #eee";
             tr.innerHTML = `
-                <td style="padding:10px;">#${o.id.slice(-6)}</td>
-                <td>${o.customer_email}</td>
-                <td>$${o.total.toLocaleString('es-CL')}</td>
-                <td style="font-size:0.85em;">${summary}</td>
+                <td style="padding:12px; font-family:monospace;">#${o.id.slice(-6)}</td>
+                <td style="padding:12px;">${o.customer_email}</td>
+                <td style="padding:12px;">$${o.total.toLocaleString('es-CL')}</td>
+                <td style="padding:12px; font-size:0.9em; color:#555;">${summary}</td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Error cargando ventas</td></tr>'; }
+
+        // 3. Dibujar Gráfico
+        renderChart(salesStats);
+
+    } catch (e) { 
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Error al cargar ventas</td></tr>'; 
+    }
+}
+
+// Función para dibujar con Chart.js
+function renderChart(stats) {
+    const ctx = document.getElementById('salesChart');
+    
+    // Si ya existe un gráfico previo, lo destruimos para no sobreponer
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    // Preparar datos para Chart.js
+    const labels = Object.keys(stats);
+    const data = Object.values(stats);
+
+    myChart = new Chart(ctx, {
+        type: 'bar', // Puede ser 'pie', 'doughnut', 'line'
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Unidades Vendidas',
+                data: data,
+                backgroundColor: [
+                    'rgba(218, 41, 28, 0.7)',  // Rojo Chile
+                    'rgba(0, 57, 166, 0.7)',   // Azul Chile
+                    'rgba(241, 196, 15, 0.7)', // Amarillo
+                    'rgba(46, 204, 113, 0.7)', // Verde
+                    'rgba(155, 89, 182, 0.7)'  // Morado
+                ],
+                borderColor: [
+                    'rgba(218, 41, 28, 1)',
+                    'rgba(0, 57, 166, 1)',
+                    'rgba(241, 196, 15, 1)',
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(155, 89, 182, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 } // Para no mostrar decimales en ventas
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Total de Productos Vendidos (Histórico)'
+                }
+            }
+        }
+    });
 }
 
 // Funciones CRUD (Igual que antes)
