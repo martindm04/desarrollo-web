@@ -3,135 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empanadería La Chilena - Catálogo</title>
+    <title>Empanadería La Chilena</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <header>
-        <div class="logo">🥟 La Chilena</div>
-<nav>
-    <a href="#">Inicio</a>
-    
-    <div id="auth-links" style="display:inline;">
-        <a href="#" onclick="openModal('register-modal')">Registrarse</a>
-        <a href="#" onclick="openModal('login-modal')">Iniciar Sesión</a>
-    </div>
+        <nav>
+            <div class="nav-group">
+                <div class="logo" style="font-size:1.5rem; font-weight:bold;">🥟 La Chilena</div>
+                <a href="#" onclick="window.location.reload()">Inicio</a>
+            </div>
 
-    <div id="user-info" style="display:none; color: white; font-weight: bold; margin-left: 10px;">
-        Hola, <span id="user-name-display">Usuario</span> | 
-        
-        <a href="#" id="admin-link" style="display:none; color: yellow; margin: 0 10px;" onclick="toggleAdminPanel()">⚙️ Admin</a>
-        
-        <a href="#" onclick="logout()" style="font-size:0.8rem; text-decoration:underline; color: white;">Salir</a>
-    </div>
-    
-    <div class="cart-icon" onclick="toggleCart()">
-        🛒 <span id="cart-count">0</span>
-    </div>
-</nav>
+            <div class="nav-group">
+                <div id="auth-links">
+                    <a href="#" onclick="openModal('login-modal')">Iniciar Sesión</a>
+                    <a href="#" onclick="openModal('register-modal')" style="background: white; color: var(--chile-red);">Registrarse</a>
+                </div>
+
+                <div id="user-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
+                    <span id="user-name-display">Usuario</span>
+                    <a href="#" onclick="openOrderHistory()">📜 Mis Pedidos</a>
+                    <a href="#" id="admin-link" class="hidden" onclick="toggleAdminPanel()" style="color: #ffd700;">⚙️ Admin</a>
+                    <a href="#" onclick="logout()" style="opacity: 0.8;">Salir</a>
+                </div>
+
+                <div class="cart-icon" onclick="toggleCart()">
+                    🛒 <span id="cart-count">0</span>
+                </div>
+            </div>
+        </nav>
     </header>
 
-    <section class="hero">
-        <h1>Las mejores empanadas de Maipú</h1>
-        <p>De horno y fritas, directo a tu mesa.</p>
+    <section class="carousel" id="main-carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item" style="background-color: #e74c3c;">
+                <h2>🔥 Empanadas Calientes</h2>
+            </div>
+            <div class="carousel-item" style="background-color: #f1c40f;">
+                <h2>🧀 Queso Derretido</h2>
+            </div>
+            <div class="carousel-item" style="background-color: #3498db;">
+                <h2>🥤 Bebidas Heladas</h2>
+            </div>
+        </div>
     </section>
 
     <section class="controls">
-        <input type="text" id="search-bar" placeholder="Buscar empanada (ej. Pino)...">
+        <div class="search-wrapper">
+            <span>🔍</span>
+            <input type="text" id="search-bar" placeholder="¿Qué se te antoja hoy?">
+        </div>
         <select id="category-filter">
-            <option value="all">Todas las Categorías</option>
-            <option value="horno">De Horno</option>
-            <option value="frita">Fritas</option>
-            <option value="bebida">Bebidas</option>
+            <option value="all">Todas</option>
+            <option value="horno">Horno</option>
+            <option value="frita">Frita</option>
+            <option value="bebida">Bebida</option>
         </select>
     </section>
 
     <main>
         <div id="product-grid" class="grid-container">
             </div>
-        <div id="no-results" class="hidden">No se encontraron productos 😢</div>
+        <div id="no-results" class="hidden" style="text-align:center; padding: 2rem;">
+            <h3>No encontramos lo que buscas 😢</h3>
+        </div>
     </main>
 
     <div id="cart-overlay" class="cart-overlay" onclick="toggleCart()"></div>
     <aside id="cart-sidebar" class="cart-sidebar">
         <div class="cart-header">
-            <h2>Tu Pedido</h2>
-            <button class="close-btn" onclick="toggleCart()">✖</button>
+            <h3>Tu Pedido</h3>
+            <button class="close-btn" onclick="toggleCart()" style="color:white;">✖</button>
         </div>
-        
         <div id="cart-items" class="cart-items">
-            <p style="text-align:center; color:#888;">Tu carrito está vacío</p>
+            <p style="text-align:center; color:#888;">El carrito está vacío</p>
         </div>
-
         <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total:</span>
-                <span id="cart-total-price">$0</span>
+            <div style="margin-bottom: 15px; font-size: 0.9rem; color: #666;">
+                <div style="display:flex; justify-content:space-between;"><span>Subtotal:</span><span id="cart-subtotal">$0</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>IVA (19%):</span><span id="cart-tax">$0</span></div>
+                <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
+                <div style="display:flex; justify-content:space-between; font-size: 1.3rem; font-weight: bold; color: #333;">
+                    <span>Total:</span><span id="cart-total-price">$0</span>
+                </div>
             </div>
-            <button class="checkout-btn" onclick="checkout()">Ir a Pagar</button>
+            <button class="btn-primary" onclick="openCheckoutModal()">Ir a Pagar</button>
         </div>
     </aside>
 
-<section id="admin-panel" class="hidden" style="padding: 2rem; background: #fff3cd;">
-    <h2>⚙️ Gestión de Empanadas</h2>
+    <section id="admin-panel" class="hidden" style="padding: 2rem; background: #fffbe6; max-width:1200px; margin: 0 auto;">
+        <h2>⚙️ Panel de Administración</h2>
+        
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchAdminTab('products')">📦 Productos</button>
+            <button class="tab-btn" onclick="switchAdminTab('orders')">💰 Ventas Realizadas</button>
+        </div>
 
-    <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <h3>Agregar / Editar Producto</h3>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="number" id="adm-id" placeholder="ID (ej: 6)" style="width: 80px;">
-            <input type="text" id="adm-name" placeholder="Nombre (ej: Empanada Mariscos)">
-            <select id="adm-category">
-                <option value="horno">Horno</option>
-                <option value="frita">Frita</option>
-                <option value="bebida">Bebida</option>
-            </select>
-            <input type="number" id="adm-price" placeholder="Precio">
-            <input type="number" id="adm-stock" placeholder="Stock">
-            <input type="text" id="adm-image" placeholder="Nombre imagen (ej: foto.jpg)">
-            <button class="btn-add" style="width: auto; margin: 0;" onclick="saveProduct()">Guardar</button>
-            <button class="btn-add" style="width: auto; margin: 0; background: #666;" onclick="clearAdminForm()">Limpiar</button>
+        <div id="tab-products" class="admin-content active">
+            <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: var(--shadow);">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="number" id="adm-id" placeholder="ID" style="width: 60px;">
+                    <input type="text" id="adm-name" placeholder="Nombre" style="flex-grow:1;">
+                    <select id="adm-category"><option value="horno">Horno</option><option value="frita">Frita</option><option value="bebida">Bebida</option></select>
+                    <input type="number" id="adm-price" placeholder="Precio" style="width: 100px;">
+                    <input type="number" id="adm-stock" placeholder="Stock" style="width: 80px;">
+                    <input type="text" id="adm-image" placeholder="URL Imagen" style="flex-grow:1;">
+                    <button class="btn-primary" style="width: auto;" onclick="saveProduct()">Guardar</button>
+                    <button class="btn-secondary" style="width: auto;" onclick="clearAdminForm()">Limpiar</button>
+                </div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <thead style="background: #333; color: white;"><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+                <tbody id="admin-table-body"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-orders" class="admin-content">
+            <button class="btn-secondary" onclick="loadAdminOrders()" style="margin-bottom:10px;">🔄 Actualizar Ventas</button>
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <thead style="background: var(--chile-blue); color: white;">
+                    <tr><th>ID Orden</th><th>Cliente</th><th>Total</th><th>Items</th></tr>
+                </thead>
+                <tbody id="admin-orders-body"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <div id="add-to-cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('add-to-cart-modal')">&times;</span>
+            <h2 id="modal-product-name">Agregar Producto</h2>
+            <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin: 20px 0;">
+                <button class="btn-secondary" style="width:40px;" onclick="adjustModalQty(-1)">-</button>
+                <span id="modal-qty" style="font-size:1.5rem; font-weight:bold;">1</span>
+                <button class="btn-secondary" style="width:40px;" onclick="adjustModalQty(1)">+</button>
+            </div>
+            <button class="btn-primary" onclick="confirmAddFromModal('continue')">Agregar y Seguir Comprando</button>
+            <button class="btn-secondary" onclick="confirmAddFromModal('checkout')">Agregar e Ir al Carrito</button>
         </div>
     </div>
 
-    <table style="width: 100%; border-collapse: collapse; background: white;">
-        <thead>
-            <tr style="background: #333; color: white; text-align: left;">
-                <th style="padding: 10px;">ID</th>
-                <th style="padding: 10px;">Nombre</th>
-                <th style="padding: 10px;">Precio</th>
-                <th style="padding: 10px;">Stock</th>
-                <th style="padding: 10px;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="admin-table-body">
-            </tbody>
-    </table>
-</section>
-
-    <footer>
-        <p>&copy; 2025 Empanadería La Chilena - Maipú</p>
-    </footer>
-<div id="register-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
-        <h2>Crear Cuenta</h2>
-        <input type="text" id="reg-name" placeholder="Nombre Completo">
-        <input type="email" id="reg-email" placeholder="Correo Electrónico">
-        <input type="password" id="reg-pass" placeholder="Contraseña">
-        <button class="btn-add" onclick="registerUser()">Registrarse</button>
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('login-modal')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <input type="email" id="login-email" placeholder="Correo Electrónico" onkeydown="handleEnter(event, 'login-pass')">
+            <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="handleEnter(event, 'login-btn')">
+            <button id="login-btn" class="btn-primary" onclick="loginUser()">Entrar</button>
+        </div>
     </div>
-</div>
 
-<div id="login-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal('login-modal')">&times;</span>
-        <h2>Iniciar Sesión</h2>
-        <input type="email" id="login-email" placeholder="Correo Electrónico">
-        <input type="password" id="login-pass" placeholder="Contraseña">
-        <button class="btn-add" onclick="loginUser()">Entrar</button>
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
+            <h2>Crear Cuenta</h2>
+            <input type="text" id="reg-name" placeholder="Nombre">
+            <input type="email" id="reg-email" placeholder="Correo">
+            <input type="password" id="reg-pass" placeholder="Contraseña">
+            <button class="btn-primary" onclick="registerUser()">Registrarse</button>
+        </div>
     </div>
-</div>
+
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('checkout-modal')">&times;</span>
+            <h2>Confirmar Pedido</h2>
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
+                <p>Total: <strong id="modal-total-amount" style="color:var(--chile-red); font-size:1.2rem;"></strong></p>
+                <p>Email: <span id="modal-user-email"></span></p>
+            </div>
+            <button class="btn-primary" onclick="confirmCheckout()">✅ Confirmar Pago</button>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal">
+        <div class="modal-content" style="width: 600px; max-width:95%;">
+            <span class="close-modal" onclick="closeModal('history-modal')">&times;</span>
+            <h2>📜 Mis Pedidos</h2>
+            <div style="max-height:400px; overflow-y:auto;">
+                <table style="width:100%; text-align:left;">
+                    <thead style="border-bottom:2px solid #ddd;"><tr><th>ID</th><th>Total</th><th>Estado</th><th>Detalle</th></tr></thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+                <p id="no-history-msg" class="hidden" style="margin-top:10px;">No hay pedidos.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
 
     <script src="app.js"></script>
 </body>

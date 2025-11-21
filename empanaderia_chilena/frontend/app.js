@@ -1,407 +1,421 @@
-// --- VARIABLES GLOBALES ---
+// --- 1. VARIABLES GLOBALES ---
 const grid = document.getElementById('product-grid');
-const searchInput = document.getElementById('search-bar');
-const categoryFilter = document.getElementById('category-filter');
-const noResultsMsg = document.getElementById('no-results');
-
-// Carrito (Sidebar)
 const cartSidebar = document.getElementById('cart-sidebar');
-const cartOverlay = document.getElementById('cart-overlay');
 const cartItemsContainer = document.getElementById('cart-items');
 const cartTotalElement = document.getElementById('cart-total-price');
 const cartCountElement = document.getElementById('cart-count');
 
-// Estado de la aplicación
-let productsDB = []; // Productos traídos del backend
-let cart = [];       // Carrito de compras (Memoria)
+let productsDB = [];
+let cart = [];
+let currentUser = null;
+let selectedProductForModal = null;
+let tempQty = 1;
 
-// --- 1. CONEXIÓN BACKEND ---
-async function fetchProducts() {
-    try {
-        const response = await fetch('http://127.0.0.1:8000/products');
-        if (!response.ok) throw new Error("Error servidor");
-        productsDB = await response.json();
-        renderProducts(productsDB);
-    } catch (error) {
-        console.error(error);
-        grid.innerHTML = `<p style="color:red; text-align:center;">⚠ Error de conexión con Backend</p>`;
+// --- 2. INICIO Y EVENTOS ---
+async function init() {
+    await fetchProducts();
+    loadCartFromStorage();
+    loadSessionFromStorage();
+    setupGlobalEvents(); // Punto 1: ESC
+    loadDynamicCarousel(); // Punto 2: Carrusel dinámico
+}
+
+function setupGlobalEvents() {
+    // Cerrar modales con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+            if(cartSidebar.classList.contains('active')) toggleCart();
+        }
+    });
+}
+
+// Punto 2: Carrusel Dinámico (Muestra 3 productos al azar)
+function loadDynamicCarousel() {
+    const carouselInner = document.querySelector('.carousel-inner');
+    if (!carouselInner || productsDB.length === 0) return;
+    
+    // Tomar 3 productos aleatorios (o los primeros 3 si hay pocos)
+    const featured = productsDB.sort(() => 0.5 - Math.random()).slice(0, 3);
+    
+    carouselInner.innerHTML = '';
+    const colors = ['#e74c3c', '#f1c40f', '#3498db'];
+    
+    featured.forEach((p, index) => {
+        const item = document.createElement('div');
+        item.className = 'carousel-item';
+        item.style.backgroundColor = colors[index % 3];
+        // Si tiene imagen real la usamos de fondo, si no color plano
+        if(p.image.startsWith('http')) {
+            item.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${p.image}')`;
+        }
+        item.innerHTML = `<h2>${p.name} <br> <small>$${p.price}</small></h2>`;
+        carouselInner.appendChild(item);
+    });
+}
+
+// --- 3. UTILIDADES ---
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${type === 'success' ? '✅' : 'ℹ️'}</span> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function handleEnter(event, nextId) {
+    if (event.key === 'Enter') {
+        if (nextId === 'login-btn') loginUser();
+        else document.getElementById(nextId).focus();
     }
 }
 
-// --- 2. RENDERIZADO CATÁLOGO ---
+function saveCartToStorage() { localStorage.setItem('empanada_cart', JSON.stringify(cart)); }
+function loadCartFromStorage() {
+    const saved = localStorage.getItem('empanada_cart');
+    if (saved) { cart = JSON.parse(saved); updateCartUI(); }
+}
+function saveSessionToStorage() { localStorage.setItem('empanada_user', JSON.stringify(currentUser)); }
+function loadSessionFromStorage() {
+    const saved = localStorage.getItem('empanada_user');
+    if (saved) { currentUser = JSON.parse(saved); updateUserUI(); }
+}
+
+// --- 4. CATÁLOGO Y FILTROS (Punto 5 Arreglado) ---
+async function fetchProducts() {
+    try {
+        const res = await fetch('http://127.0.0.1:8000/products');
+        productsDB = await res.json();
+        renderProducts(productsDB);
+    } catch (e) { console.error(e); }
+}
+
 function renderProducts(products) {
-    grid.innerHTML = ''; 
-    if (products.length === 0) {
-        noResultsMsg.classList.remove('hidden');
-        return;
-    } else {
-        noResultsMsg.classList.add('hidden');
-    }
-
-    products.forEach(product => {
-        const isOutOfStock = product.stock === 0;
-        const btnText = isOutOfStock ? "Agotado" : "Agregar";
-        const btnDisabled = isOutOfStock ? "disabled" : "";
-
+    grid.innerHTML = '';
+    products.forEach(p => {
+        const isStock = p.stock > 0;
+        let imgContent = p.image.startsWith('http') 
+            ? `<img src="${p.image}" alt="${p.name}">` 
+            : `<span style="font-size:3rem;">🥟</span>`;
+        
         const card = document.createElement('div');
-        card.className = 'card';
+        // Punto 6: Clase out-of-stock si stock es 0
+        card.className = `card ${!isStock ? 'out-of-stock' : ''}`;
+        
+        card.onclick = (e) => {
+            // Evitar abrir si se hace clic en botones internos (si hubieran)
+            if (isStock) openAddToCartModal(p.id);
+            else showToast("Producto agotado", "error");
+        };
+
         card.innerHTML = `
-            <div style="height:150px; background:#eee; display:flex; align-items:center; justify-content:center;">
-                <span>${product.image}</span> 
-            </div>
+            <span class="badge ${p.category}">${p.category}</span>
+            <div class="card-img-container">${imgContent}</div>
             <div class="card-body">
-                <h3 class="card-title">${product.name}</h3>
-                <span class="card-category">${product.category}</span>
-                <div style="display:flex; justify-content:space-between; margin-top:auto;">
-                    <p class="card-price">$${product.price}</p>
-                    <small style="color:${product.stock < 5 ? 'red' : 'green'}">Stock: ${product.stock}</small>
+                <h3 class="card-title">${p.name}</h3>
+                <div class="card-footer">
+                    <span class="card-price">$${p.price.toLocaleString('es-CL')}</span>
+                    <small style="color:${isStock ? 'green' : 'red'}">${isStock ? 'Stock: '+p.stock : 'Agotado'}</small>
                 </div>
             </div>
-            <button class="btn-add" ${btnDisabled} onclick="addToCart(${product.id})">
-                ${btnText}
-            </button>
         `;
         grid.appendChild(card);
     });
 }
 
-// --- 3. LÓGICA DEL CARRITO (ÉPICA 4) ---
+// Punto 5: Filtro arreglado
+function filterProducts() {
+    const searchText = document.getElementById('search-bar').value.toLowerCase();
+    const selectedCategory = document.getElementById('category-filter').value;
 
-// Mostrar/Ocultar Sidebar
+    const filtered = productsDB.filter(product => {
+        const matchesText = product.name.toLowerCase().includes(searchText);
+        const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+        return matchesText && matchesCategory;
+    });
+
+    renderProducts(filtered);
+}
+
+// Listeners para filtros
+document.getElementById('search-bar').addEventListener('keyup', filterProducts);
+document.getElementById('category-filter').addEventListener('change', filterProducts);
+
+
+// --- 5. MODAL DE CANTIDAD ---
+function openAddToCartModal(id) {
+    selectedProductForModal = productsDB.find(p => p.id === id);
+    tempQty = 1;
+    document.getElementById('modal-product-name').innerText = selectedProductForModal.name;
+    document.getElementById('modal-qty').innerText = tempQty;
+    openModal('add-to-cart-modal');
+}
+
+function adjustModalQty(delta) {
+    const newQty = tempQty + delta;
+    if (newQty >= 1 && newQty <= selectedProductForModal.stock) {
+        tempQty = newQty;
+        document.getElementById('modal-qty').innerText = tempQty;
+    }
+}
+
+function confirmAddFromModal(action) {
+    addToCart(selectedProductForModal.id, tempQty);
+    closeModal('add-to-cart-modal');
+    if (action === 'checkout') toggleCart();
+}
+
+// --- 6. CARRITO ---
 function toggleCart() {
     cartSidebar.classList.toggle('active');
-    cartOverlay.classList.toggle('active');
+    document.getElementById('cart-overlay').classList.toggle('active');
 }
 
-// Agregar al Carrito
-function addToCart(id) {
-    // Verificar si el producto ya está en el carrito
-    const existingItem = cart.find(item => item.id === id);
-    const productInfo = productsDB.find(p => p.id === id);
+function addToCart(id, qty = 1) {
+    const existing = cart.find(i => i.id === id);
+    const info = productsDB.find(p => p.id === id);
 
-    if (existingItem) {
-        // Si ya existe, sumamos 1 a la cantidad (validando stock)
-        if (existingItem.quantity < productInfo.stock) {
-            existingItem.quantity++;
-        } else {
-            alert("¡No queda más stock de esta empanada!");
-            return;
-        }
+    if (existing) {
+        if (existing.quantity + qty <= info.stock) existing.quantity += qty;
+        else return showToast("Stock insuficiente", "error");
     } else {
-        // Si no existe, lo agregamos con cantidad 1
-        cart.push({ ...productInfo, quantity: 1 });
+        cart.push({ ...info, quantity: qty });
     }
-
+    saveCartToStorage();
     updateCartUI();
-    // Abrir el carrito automáticamente al agregar
-    if (!cartSidebar.classList.contains('active')) toggleCart();
+    showToast("Agregado al carrito", "success");
 }
 
-// Modificar Cantidad (+ / -)
-function changeQuantity(id, delta) {
-    const item = cart.find(i => i.id === id);
-    const productInfo = productsDB.find(p => p.id === id);
-
-    item.quantity += delta;
-
-    // Si la cantidad baja a 0, eliminar del carrito
-    if (item.quantity <= 0) {
-        cart = cart.filter(i => i.id !== id);
-    } 
-    // Validar que no supere el stock real
-    else if (item.quantity > productInfo.stock) {
-        item.quantity = productInfo.stock;
-        alert("Stock máximo alcanzado");
-    }
-
-    updateCartUI();
-}
-
-// Renderizar Carrito y Calcular Totales
 function updateCartUI() {
     cartItemsContainer.innerHTML = '';
-    let total = 0;
-    let totalCount = 0;
-
+    let total = 0; let count = 0;
     cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        totalCount += item.quantity;
-
+        total += item.price * item.quantity;
+        count += item.quantity;
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML = `
-            <div class="cart-item-info">
-                <h4>${item.name}</h4>
-                <p>$${item.price} x ${item.quantity} = <strong>$${itemTotal}</strong></p>
-            </div>
-            <div class="cart-controls">
-                <button onclick="changeQuantity(${item.id}, -1)">-</button>
-                <span>${item.quantity}</span>
-                <button onclick="changeQuantity(${item.id}, 1)">+</button>
+            <div><strong>${item.name}</strong><br>$${item.price} x ${item.quantity}</div>
+            <div>
+                <button onclick="updateItemQty(${item.id}, -1)" style="padding:2px 8px;">-</button>
+                <button onclick="updateItemQty(${item.id}, 1)" style="padding:2px 8px;">+</button>
             </div>
         `;
         cartItemsContainer.innerHTML += div.outerHTML;
     });
-
-    // Actualizar textos
-    cartTotalElement.innerText = `$${total}`;
-    cartCountElement.innerText = totalCount;
-
-    // Mensaje vacío
-    if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p style="text-align:center; color:#888;">Tu carrito está vacío</p>';
-    }
+    const net = Math.round(total / 1.19);
+    document.getElementById('cart-subtotal').innerText = `$${net.toLocaleString('es-CL')}`;
+    document.getElementById('cart-tax').innerText = `$${(total - net).toLocaleString('es-CL')}`;
+    cartTotalElement.innerText = `$${total.toLocaleString('es-CL')}`;
+    cartCountElement.innerText = count;
 }
 
-// Filtros (igual que antes)
-function filterProducts() {
-    const searchText = searchInput.value.toLowerCase();
-    const selectedCategory = categoryFilter.value;
-    const filtered = productsDB.filter(product => {
-        return product.name.toLowerCase().includes(searchText) && 
-               (selectedCategory === 'all' || product.category === selectedCategory);
-    });
-    renderProducts(filtered);
-}
-
-searchInput.addEventListener('input', filterProducts);
-categoryFilter.addEventListener('change', filterProducts);
-
-// --- ÉPICA 5: PROCESO DE PAGO Y ORDEN ---
-
-async function checkout() {
-    if (cart.length === 0) {
-        alert("El carrito está vacío");
-        return;
+function updateItemQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    const info = productsDB.find(p => p.id === id); // Info fresca para validar stock
+    
+    // Si estamos sumando, chequear stock
+    if (delta > 0 && item.quantity >= info.stock) {
+        return showToast("Stock máximo alcanzado", "info");
     }
 
-    // 1. Simular identificación del usuario (US-01 pendiente)
-    const email = prompt("Ingresa tu correo para confirmar el pedido:");
-    if (!email) return;
-
-    // 2. Preparar datos para el Backend (coincidiendo con models.py)
-    const orderData = {
-        customer_email: email,
-        items: cart.map(item => ({
-            product_id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-        })),
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    };
-
-    try {
-        // 3. Enviar al Backend (POST)
-        const response = await fetch('http://127.0.0.1:8000/orders', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(orderData)
-        });
-
-        if (!response.ok) throw new Error("Error al crear orden");
-
-        const result = await response.json();
-        console.log("Orden creada:", result);
-
-        // 4. Simular Redirección a Pasarela de Pago (US-10)
-        alert(`✅ Orden #${result.id} creada.\nRedirigiendo a WebPay... (Simulación)\n\n¡Pago Exitoso!`);
-        
-        // 5. Limpiar carrito y cerrar
-        cart = [];
-        updateCartUI();
-        toggleCart();
-
-    } catch (error) {
-        console.error(error);
-        alert("Hubo un error al procesar tu pedido.");
-    }
+    item.quantity += delta;
+    if (item.quantity <= 0) cart = cart.filter(i => i.id !== id);
+    
+    saveCartToStorage();
+    updateCartUI();
 }
 
-// --- ÉPICA 1: AUTENTICACIÓN (LOGIN / REGISTRO) ---
-
-let currentUser = null; // Variable para guardar al usuario logueado
-
-// Abrir/Cerrar Modales
-function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-}
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-}
-
-// 1. Función de REGISTRO
-async function registerUser() {
-    const name = document.getElementById('reg-name').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-pass').value;
-
-    if (!name || !email || !password) {
-        alert("Por favor completa todos los campos");
-        return;
-    }
-
-    try {
-        const response = await fetch('http://127.0.0.1:8000/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail);
-        }
-
-        alert("¡Usuario creado! Ahora puedes iniciar sesión.");
-        closeModal('register-modal');
-        openModal('login-modal'); // Abrir login automáticamente
-
-    } catch (error) {
-        alert("Error: " + error.message);
-    }
-}
-
-// 2. Función de LOGIN
-async function loginUser() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-pass').value;
-
-    try {
-        const response = await fetch('http://127.0.0.1:8000/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, name: "temp" }) // name es requerido por el modelo pero no se usa en login
-        });
-
-        if (!response.ok) throw new Error("Credenciales incorrectas");
-
-        const data = await response.json();
-        
-        // Guardar usuario en variable global
-        currentUser = data;
-        
-        // Actualizar UI (Ocultar enlaces, mostrar nombre)
-        document.getElementById('auth-links').style.display = 'none';
-        document.getElementById('user-info').style.display = 'inline';
-        // Verificar rol para mostrar Admin Panel
-        if (currentUser.role === 'admin' || currentUser.email.includes('@admin.com')) {
-            document.getElementById('admin-link').style.display = 'inline';
-        }
-        document.getElementById('user-name-display').innerText = currentUser.name;
-
-        closeModal('login-modal');
-        alert("¡Bienvenido " + currentUser.name + "!");
-
-    } catch (error) {
-        alert("Error: " + error.message);
-    }
-}
-
-// 3. Función de LOGOUT
-function logout() {
-    currentUser = null;
-    document.getElementById('auth-links').style.display = 'inline';
-    document.getElementById('user-info').style.display = 'none';
-    alert("Sesión cerrada");
-}
-
-// --- ACTUALIZACIÓN DEL CHECKOUT (INTEGRACIÓN) ---
-// Sobrescribimos la función checkout anterior para usar el usuario real
-async function checkout() {
-    if (cart.length === 0) {
-        alert("El carrito está vacío");
-        return;
-    }
-
-    // Validar si hay usuario logueado
+// --- 7. CHECKOUT Y PAGO (Punto 4: Descontar Stock) ---
+function openCheckoutModal() {
+    if (cart.length === 0) return showToast("Carrito vacío", "error");
     if (!currentUser) {
-        alert("Debes iniciar sesión para comprar.");
-        openModal('login-modal'); // Abrir login automáticamente
-        return;
+        showToast("Inicia sesión para comprar", "info");
+        return openModal('login-modal');
     }
+    // Mostrar total
+    const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    document.getElementById('modal-total-amount').innerText = `$${total.toLocaleString('es-CL')}`;
+    document.getElementById('modal-user-email').innerText = currentUser.email;
+    
+    toggleCart(); // Cerrar sidebar para que no tape el modal (Punto 6)
+    openModal('checkout-modal');
+}
 
-    // Usar el email del usuario logueado automáticamente
+async function confirmCheckout() {
     const orderData = {
         customer_email: currentUser.email,
-        items: cart.map(item => ({
-            product_id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity
-        })),
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        items: cart.map(i => ({ product_id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        total: cart.reduce((sum, i) => sum + (i.price * i.quantity), 0)
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(orderData)
+        const res = await fetch('http://127.0.0.1:8000/orders', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData)
         });
-
-        if (!response.ok) throw new Error("Error al crear orden");
-
-        const result = await response.json();
-        alert(`✅ Orden #${result.id} creada para ${currentUser.name}.\nRedirigiendo a WebPay...`);
         
-        cart = [];
-        updateCartUI();
-        toggleCart();
+        if(!res.ok) {
+            // Manejar error de stock (Backend responde 400)
+            const err = await res.json();
+            throw new Error(err.detail || "Error al procesar");
+        }
 
-    } catch (error) {
-        console.error(error);
-        alert("Error al procesar pedido");
+        const result = await res.json();
+        closeModal('checkout-modal');
+        showToast(`¡Orden exitosa! ID: #${result.id.slice(-4)}`, "success");
+        
+        cart = []; 
+        saveCartToStorage(); 
+        updateCartUI();
+        fetchProducts(); // Recargar productos para ver nuevo stock (Punto 4)
+
+    } catch (e) { 
+        showToast(e.message, "error"); 
+        closeModal('checkout-modal'); // Cerrar modal si falla para revisar
     }
 }
-// --- ÉPICA 6: LÓGICA DEL PANEL DE ADMINISTRACIÓN ---
 
-// Mostrar/Ocultar Panel
+// --- 8. USUARIOS ---
+async function loginUser() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    try {
+        const res = await fetch('http://127.0.0.1:8000/login', {
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password: pass, name:'temp'})
+        });
+        if(!res.ok) throw new Error("Datos incorrectos");
+        currentUser = await res.json();
+        saveSessionToStorage();
+        updateUserUI();
+        closeModal('login-modal');
+        showToast(`Hola ${currentUser.name}`, "success");
+    } catch (e) { showToast(e.message, "error"); }
+}
+
+function updateUserUI() {
+    document.getElementById('auth-links').style.display = 'none';
+    const infoDiv = document.getElementById('user-info');
+    infoDiv.classList.remove('hidden'); 
+    infoDiv.style.display = 'flex';
+    document.getElementById('user-name-display').innerText = currentUser.name;
+    if(currentUser.email.includes('@admin.com')) {
+        document.getElementById('admin-link').classList.remove('hidden');
+        document.getElementById('admin-link').style.display = 'inline';
+    }
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('empanada_user');
+    location.reload();
+}
+
+// --- 9. HISTORIAL DE PEDIDOS ---
+async function openOrderHistory() {
+    openModal('history-modal');
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+    const res = await fetch(`http://127.0.0.1:8000/orders/user/${currentUser.email}`);
+    const orders = await res.json();
+    tbody.innerHTML = '';
+    if(orders.length === 0) document.getElementById('no-history-msg').classList.remove('hidden');
+    else {
+        document.getElementById('no-history-msg').classList.add('hidden');
+        orders.reverse().forEach(o => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>#${o.id.slice(-4)}</td><td>$${o.total.toLocaleString('es-CL')}</td><td>${o.status}</td><td>${o.items.length} items</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+// --- 10. PANEL DE ADMINISTRACIÓN (MEJORADO) ---
 function toggleAdminPanel() {
     const panel = document.getElementById('admin-panel');
     const mainGrid = document.getElementById('product-grid');
-    const hero = document.querySelector('.hero');
-    
+    const carousel = document.getElementById('main-carousel');
+    const controls = document.querySelector('.controls');
+
     if (panel.classList.contains('hidden')) {
-        // Mostrar Admin, ocultar tienda
+        // Mostrar Admin
         panel.classList.remove('hidden');
         mainGrid.classList.add('hidden');
-        hero.classList.add('hidden');
-        loadAdminTable(); // Cargar datos actualizados
+        carousel.classList.add('hidden');
+        controls.classList.add('hidden');
+        loadAdminTable();
     } else {
-        // Volver a la tienda
+        // Mostrar Tienda
         panel.classList.add('hidden');
         mainGrid.classList.remove('hidden');
-        hero.classList.remove('hidden');
-        fetchProducts(); // Recargar catálogo cliente
+        carousel.classList.remove('hidden');
+        controls.classList.remove('hidden');
+        fetchProducts();
     }
 }
 
-// Cargar la tabla de productos
+// Cambio de Pestañas Admin (Punto 3)
+function switchAdminTab(tabName) {
+    // Ocultar todos los contenidos y desactivar botones
+    document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+    // Activar seleccionado
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    // Buscar el botón correspondiente (truco simple: por orden o texto, aquí asumimos por orden de clic)
+    event.target.classList.add('active');
+
+    if (tabName === 'orders') loadAdminOrders();
+    if (tabName === 'products') loadAdminTable();
+}
+
+// Cargar Productos (Tabla 1)
 function loadAdminTable() {
     const tbody = document.getElementById('admin-table-body');
     tbody.innerHTML = '';
-
     productsDB.forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="padding:10px; border-bottom:1px solid #eee;">${p.id}</td>
-            <td style="padding:10px; border-bottom:1px solid #eee;">${p.name}</td>
-            <td style="padding:10px; border-bottom:1px solid #eee;">$${p.price}</td>
-            <td style="padding:10px; border-bottom:1px solid #eee;">${p.stock}</td>
-            <td style="padding:10px; border-bottom:1px solid #eee;">
-                <button onclick="editProduct(${p.id})" style="background:#f1c40f; border:none; padding:5px; cursor:pointer;">✏️</button>
-                <button onclick="deleteProduct(${p.id})" style="background:#e74c3c; color:white; border:none; padding:5px; cursor:pointer;">🗑️</button>
+            <td style="padding:12px;">${p.id}</td>
+            <td>${p.name}</td>
+            <td>$${p.price}</td>
+            <td>${p.stock}</td>
+            <td>
+                <button onclick="editProduct(${p.id})" style="background:#f1c40f; border:none; padding:5px;">✏️</button>
+                <button onclick="deleteProduct(${p.id})" style="background:#e74c3c; color:white; border:none; padding:5px;">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Guardar Producto (Crear o Editar)
+// Cargar Ventas (Tabla 2 - Punto 3)
+async function loadAdminOrders() {
+    const tbody = document.getElementById('admin-orders-body');
+    tbody.innerHTML = '<tr><td colspan="4">Cargando ventas...</td></tr>';
+    try {
+        const res = await fetch('http://127.0.0.1:8000/orders');
+        const orders = await res.json();
+        tbody.innerHTML = '';
+        orders.forEach(o => {
+            const summary = o.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:10px;">#${o.id.slice(-6)}</td>
+                <td>${o.customer_email}</td>
+                <td>$${o.total.toLocaleString('es-CL')}</td>
+                <td style="font-size:0.85em;">${summary}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Error cargando ventas</td></tr>'; }
+}
+
+// Funciones CRUD (Igual que antes)
 async function saveProduct() {
     const id = parseInt(document.getElementById('adm-id').value);
     const name = document.getElementById('adm-name').value;
@@ -410,42 +424,23 @@ async function saveProduct() {
     const stock = parseInt(document.getElementById('adm-stock').value);
     const image = document.getElementById('adm-image').value;
 
-    if (!id || !name) return alert("Faltan datos");
-
+    if (!id || !name) return showToast("Faltan datos", "error");
     const productData = { id, name, category, price, stock, image };
-    
-    // Decidir si es CREAR (POST) o ACTUALIZAR (PUT)
-    // Verificamos si el ID ya existe en la lista actual
     const exists = productsDB.some(p => p.id === id);
     const method = exists ? 'PUT' : 'POST';
-    const url = exists 
-        ? `http://127.0.0.1:8000/products/${id}` 
-        : 'http://127.0.0.1:8000/products';
+    const url = exists ? `http://127.0.0.1:8000/products/${id}` : 'http://127.0.0.1:8000/products';
 
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(productData)
-        });
-
-        if (!response.ok) throw new Error("Error al guardar");
-        
-        alert(exists ? "Producto Actualizado" : "Producto Creado");
-        
-        // Recargar datos
-        const res = await fetch('http://127.0.0.1:8000/products');
-        productsDB = await res.json();
+        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(productData)});
+        if(!res.ok) throw new Error("Error guardando");
+        showToast("Guardado exitoso", "success");
+        const r = await fetch('http://127.0.0.1:8000/products');
+        productsDB = await r.json();
         loadAdminTable();
         clearAdminForm();
-
-    } catch (error) {
-        console.error(error);
-        alert("Error: " + error.message);
-    }
+    } catch(e) { showToast(e.message, "error"); }
 }
 
-// Cargar datos en el formulario para editar
 function editProduct(id) {
     const p = productsDB.find(p => p.id === id);
     document.getElementById('adm-id').value = p.id;
@@ -456,25 +451,13 @@ function editProduct(id) {
     document.getElementById('adm-image').value = p.image;
 }
 
-// Eliminar Producto
 async function deleteProduct(id) {
-    if(!confirm("¿Seguro que quieres eliminar este producto?")) return;
-
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/products/${id}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) throw new Error("Error al eliminar");
-        
-        alert("Producto eliminado");
-        // Recargar
-        const res = await fetch('http://127.0.0.1:8000/products');
-        productsDB = await res.json();
-        loadAdminTable();
-
-    } catch (error) {
-        alert(error.message);
-    }
+    if(!confirm("¿Eliminar?")) return;
+    await fetch(`http://127.0.0.1:8000/products/${id}`, {method:'DELETE'});
+    showToast("Eliminado", "info");
+    const r = await fetch('http://127.0.0.1:8000/products');
+    productsDB = await r.json();
+    loadAdminTable();
 }
 
 function clearAdminForm() {
@@ -485,5 +468,5 @@ function clearAdminForm() {
     document.getElementById('adm-image').value = '';
 }
 
-// Iniciar
-fetchProducts();
+// INICIAR
+init();
