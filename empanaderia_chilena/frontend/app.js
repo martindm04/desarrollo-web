@@ -36,14 +36,42 @@ async function api(endpoint, method="GET", body=null) {
     }
 }
 
+
 async function loadProducts() {
+    const grid = document.getElementById("grid");
+    
+    // 1. Mostrar Skeletons (Feedback inmediato)
+    if(grid) {
+        grid.innerHTML = ""; // Limpiar
+        // Generamos 4 esqueletos de prueba
+        for(let i=0; i<4; i++) {
+            grid.innerHTML += `
+                <div class="card-skeleton">
+                    <div class="skeleton sk-img"></div>
+                    <div class="sk-body">
+                        <div class="skeleton sk-title"></div>
+                        <div class="skeleton sk-price"></div>
+                        <div class="skeleton sk-btn"></div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     try {
+        // 2. Simular un pequeño delay (opcional, para que veas el efecto en local)
+        // await new Promise(r => setTimeout(r, 800)); 
+
         state.products = await api("/products");
+        
+        // 3. Renderizar contenido real
         renderGrid();
         renderCarousel();
+        
     } catch (e) { 
         console.error(e);
         toast("Error cargando productos. Revisa el backend.", "error"); 
+        if(grid) grid.innerHTML = "<h3 style='grid-column:1/-1; text-align:center'>Error al conectar con el servidor ⚠️</h3>";
     }
 }
 
