@@ -65,46 +65,84 @@ function renderGrid() {
     });
 }
 
+// --- CARRUSEL LOGIC ---
+let currentSlide = 0;
+let carouselInterval;
+
 function renderCarousel() {
     const track = document.getElementById("carousel-track");
+    const container = document.getElementById("hero-carousel");
     
-    // 1. Filtrar productos con imagen
+    // 1. Filtrar productos destacados (con imagen y stock)
     const featured = state.products.filter(p => p.image.startsWith('http') && p.stock > 0).slice(0, 5);
     
-    // 2. CORRECCIÓN: Usar el ID correcto del HTML ('hero-carousel')
-    const carouselContainer = document.getElementById("hero-carousel");
-    
     if(featured.length === 0) {
-        if(carouselContainer) carouselContainer.style.display = 'none'; // Ocultar si no hay productos
+        if(container) container.style.display = 'none';
         return;
     } else {
-        if(carouselContainer) carouselContainer.style.display = 'block'; // Mostrar si hay
+        if(container) container.style.display = 'block';
     }
 
     track.innerHTML = "";
     
-    featured.forEach(p => {
+    featured.forEach((p, index) => {
         const slide = document.createElement("div");
         slide.className = "carousel-slide";
-        // Fondo sutil según categoría
-        const bgColor = p.category === 'horno' ? '#FFF5F5' : '#F0F9FF';
-        slide.style.backgroundColor = bgColor;
+        // Colores alternados para el fondo
+        slide.style.background = index % 2 === 0 ? "linear-gradient(to right, #FFF5F5, #fff)" : "linear-gradient(to right, #F0F9FF, #fff)";
         
         slide.innerHTML = `
             <div class="carousel-content">
                 <h2>${p.name}</h2>
-                <p>Sabor auténtico artesanal.</p>
-                <button class="btn-primary" style="width:auto; padding:12px 30px;" onclick="openQtyModal(${p.id})">
-                    Comprar $${p.price.toLocaleString('es-CL')}
+                <p>El sabor tradicional chileno, recién horneado para ti.</p>
+                <button class="btn-primary" onclick="addToCart(${p.id})">
+                    Ordenar Ahora - $${p.price}
                 </button>
             </div>
-            <img src="${p.image}" class="carousel-img">
+            <img src="${p.image}" class="carousel-img" alt="${p.name}">
         `;
         track.appendChild(slide);
     });
-    
-    startCarousel(); // Iniciar animación
+
+    // Reiniciar posición
+    currentSlide = 0;
+    updateCarousel();
+    startAutoSlide();
 }
+
+function moveSlide(direction) {
+    const track = document.getElementById("carousel-track");
+    const totalSlides = track.children.length;
+    
+    currentSlide += direction;
+
+    // Lógica de bucle infinito
+    if (currentSlide < 0) {
+        currentSlide = totalSlides - 1;
+    } else if (currentSlide >= totalSlides) {
+        currentSlide = 0;
+    }
+
+    updateCarousel();
+    resetAutoSlide(); // Reiniciar el temporizador si el usuario toca las flechas
+}
+
+function updateCarousel() {
+    const track = document.getElementById("carousel-track");
+    // Movemos el track usando translateX según el índice actual
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+}
+
+function startAutoSlide() {
+    clearInterval(carouselInterval);
+    carouselInterval = setInterval(() => moveSlide(1), 5000); // Cambio cada 5 segundos
+}
+
+function resetAutoSlide() {
+    clearInterval(carouselInterval);
+    startAutoSlide();
+}
+
 function startCarousel() {
     const track = document.getElementById("carousel-track");
     let index = 0;
