@@ -72,7 +72,7 @@ function renderGrid() {
         card.className = `card ${p.stock === 0 ? 'out' : ''}`;
         card.innerHTML = `
             <span class="badge ${p.category}">${p.category}</span>
-            <div class="card-img"><img src="${p.image}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'"></div>
+            <div class="card-img"><img src="${p.image.startsWith('http') ? p.image : 'http://127.0.0.1:8000/static/images/' + p.image}" ...></div>
             <div class="card-info">
                 <h3>${p.name}</h3>
                 <div style="display:flex; justify-content:space-between;">

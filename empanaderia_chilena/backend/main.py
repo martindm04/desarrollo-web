@@ -47,8 +47,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# --- SOLUCIÓN ROBUSTA PARA RUTAS ESTÁTICAS ---
+# 1. Obtenemos la ruta absoluta de donde está este archivo (main.py)
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
+# 2. Unimos esa ruta con la carpeta "static"
+static_path = os.path.join(script_dir, "static")
+
+# 3. Montamos la carpeta usando la ruta absoluta
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
