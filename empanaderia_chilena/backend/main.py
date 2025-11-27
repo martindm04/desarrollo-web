@@ -14,6 +14,8 @@ from models import Product, Order, User, LoginRequest
 import os
 from dotenv import load_dotenv
 
+from fastapi.staticfiles import StaticFiles
+
 # Cargar variables al inicio
 load_dotenv()
 
@@ -45,6 +47,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -82,15 +85,35 @@ async def get_admin(user: dict = Depends(get_current_user)):
 # --- SEEDER (Datos Iniciales) ---
 def seed_db():
     if products_collection.count_documents({}) == 0:
+        # Base URL para imágenes locales
+        base_img = "http://127.0.0.1:8000/static/images"
+        
         initials = [
-            {"id": 1, "name": "Empanada de Pino", "category": "horno", "price": 2500, "stock": 50, "image": "https://comidaschilenas.com/wp-content/uploads/2019/02/Receta-de-empanadas-de-pino-al-horno-chilenas.jpg"},
-            {"id": 2, "name": "Empanada de Queso", "category": "frita", "price": 2000, "stock": 40, "image": "https://comidaschilenas.com/wp-content/uploads/2019/02/Receta-de-empanadas-de-queso-fritas-chilenas.jpg"},
-            {"id": 3, "name": "Camarón Queso", "category": "frita", "price": 2800, "stock": 0, "image": "https://unareceta.com/wp-content/uploads/2016/08/receta-empanadas-de-camaron-queso.jpg"},
-            {"id": 4, "name": "Bebida 500ml", "category": "bebida", "price": 1500, "stock": 100, "image": "https://dojiw2m9tvv09.cloudfront.net/11132/product/cocacola500cc8224.jpg"},
-            {"id": 11, "name": "Pebre Chileno", "category": "acompañamiento", "price": 500, "stock": 200, "image": "https://www.gourmet.cl/wp-content/uploads/2016/09/Pebre-Cuchareado-web.jpg"}
+            # NOTA: Debes descargar imágenes reales y guardarlas con estos nombres en backend/static/images/
+            # Si no tienes la imagen, usa un placeholder por mientras.
+            {
+                "id": 1, "name": "Empanada de Pino", "category": "horno", "price": 2500, "stock": 50, 
+                "image": f"{base_img}/pino.jpg" 
+            },
+            {
+                "id": 2, "name": "Empanada de Queso", "category": "frita", "price": 2000, "stock": 40, 
+                "image": f"{base_img}/queso.jpg"
+            },
+            {
+                "id": 3, "name": "Sopaipillas (3 un)", "category": "acompañamiento", "price": 1000, "stock": 80, 
+                "image": f"{base_img}/sopaipillas.jpg"
+            },
+            {
+                "id": 4, "name": "Bebida Lata", "category": "bebida", "price": 1500, "stock": 100, 
+                "image": f"{base_img}/bebida.jpg"
+            },
+            {
+                "id": 5, "name": "Pebre Chileno", "category": "acompañamiento", "price": 500, "stock": 200, 
+                "image": f"{base_img}/pebre.jpg"
+            }
         ]
         products_collection.insert_many(initials)
-        logger.info("Base de datos poblada")
+        logger.info("Base de datos poblada con imágenes locales")
 
 seed_db()
 
