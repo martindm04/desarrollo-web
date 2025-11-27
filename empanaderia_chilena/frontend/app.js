@@ -199,30 +199,95 @@ function modQty(id, d) {
     saveCart(); renderCart();
 }
 
-async function checkout() {
-    if (!state.user) return openModal("login-modal");
+// --- CHECKOUT & PAGOS ---
+
+// Paso 1: Abrir el resumen
+function openCheckout() {
+    if (state.cart.length === 0) return toast("Tu carrito está vacío", "error");
+    if (!state.user) {
+        toast("Debes iniciar sesión para comprar", "info");
+        return openModal("login-modal");
+    }
+
+    // Calcular total
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Llenar datos del modal
+    document.getElementById("chk-total").innerText = `$${total.toLocaleString('es-CL')}`;
+    document.getElementById("chk-email").innerText = state.user.email;
+
+    toggleCart(); // Cerrar el carrito lateral
+    openModal("checkout-modal"); // Abrir modal de confirmación
+}
+
+// Paso 2: Confirmar la compra (Llamada a la API)
+async function processPayment() {
     try {
         const order = {
             customer_email: state.user.email,
-            items: state.cart.map(i => ({ product_id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-            total: state.cart.reduce((a,b)=>a+b.price*b.quantity,0)
+            items: state.cart.map(i => ({ 
+                product_id: i.id, 
+                name: i.name, 
+                price: i.price, 
+                quantity: i.quantity 
+            })),
+            total: state.cart.reduce((a, b) => a + b.price * b.quantity, 0)
         };
+
         await api("/orders", "POST", order);
-        state.cart = []; saveCart(); renderCart(); loadProducts();
-        toast("Pedido Exitoso!", "success"); toggleCart();
-    } catch(e) { toast(e.message, "error"); }
+        
+        // Limpieza post-compra
+        state.cart = []; 
+        saveCart(); 
+        renderCart(); 
+        loadProducts(); // Actualizar stock visualmente
+        closeModal("checkout-modal");
+        
+        toast("¡Pedido Exitoso! Gracias por tu compra 🥟", "success");
+    } catch(e) { 
+        toast(e.message || "Error procesando el pedido", "error"); 
+    }
 }
 
 // --- AUTH ---
 async function login() {
-    const u = document.getElementById("log-user").value;
-    const p = document.getElementById("log-pass").value;
+    // CORRECCIÓN: IDs coinciden con el HTML (login-user, login-pass)
+    const u = document.getElementById("login-user").value;
+    const p = document.getElementById("login-pass").value;
+    
+    if(!u || !p) return toast("Ingresa usuario y contraseña", "error");
+
     try {
         const data = await api("/login", "POST", { identifier: u, password: p });
-        state.user = data.user; state.token = data.access_token;
-        saveSession(); updateAuthUI(); closeModal("login-modal");
-        toast(`Hola ${state.user.name}`, "success");
-    } catch { toast("Error de credenciales", "error"); }
+        state.user = data.user; 
+        state.token = data.access_token;
+        saveSession(); 
+        updateAuthUI(); 
+        closeModal("login-modal");
+        toast(`Bienvenido, ${state.user.name}!`, "success");
+    } catch (e) { 
+        console.error(e);
+        toast("Credenciales incorrectas", "error"); 
+    }
+}
+
+async function register() {
+    const name = document.getElementById("reg-name").value;
+    const email = document.getElementById("reg-email").value;
+    const pass = document.getElementById("reg-pass").value;
+
+    if (!name || !email || !pass) return toast("Completa todos los campos", "error");
+    if (pass.length < 8) return toast("La contraseña debe tener 8 caracteres", "error");
+
+    try {
+        // El backend espera: name, email, password
+        await api("/register", "POST", { name, email, password: pass });
+        toast("¡Cuenta creada! Por favor inicia sesión.", "success");
+        closeModal("register-modal");
+        openModal("login-modal"); // Abrir login automáticamente
+    } catch (e) {
+        toast(e.message || "Error al registrar", "error");
+    }
 }
 
 function logout() {
@@ -282,4 +347,14 @@ function toggleCart() {
 function saveSession() { localStorage.setItem("dw_sess", JSON.stringify({u:state.user, t:state.token})); }
 function loadSession() { const s = JSON.parse(localStorage.getItem("dw_sess")); if(s) { state.user=s.u; state.token=s.t; updateAuthUI(); } }
 function saveCart() { localStorage.setItem("dw_cart", JSON.stringify(state.cart)); }
-function loadCartFromStorage() { const c = JSON.parse(localStorage.getItem("dw_cart")); if(c) { state.cart=c; renderCart(); } }
+function loadCartFromStorage() { const c = JSON.parse(localStorage.getItem("dw_cart")); if (c) { state.cart = c; renderCart(); } }
+function nextFocus(event, nextId) {
+    if (event.key === "Enter") {
+        const el = document.getElementById(nextId);
+        if(el) el.focus();
+        // Si el siguiente es un botón, también podrías hacer el.click()
+        if(nextId.includes('btn')) el.click();
+    }
+}
+loadCartFromStorage();
+// --- FIN ---
