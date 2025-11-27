@@ -1,7 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List, Optional
 
-# --- PRODUCTOS ---
+# Modelo flexible para Login (Email o Usuario)
+class LoginRequest(BaseModel):
+    identifier: str
+    password: str
+
 class Product(BaseModel):
     id: int
     name: str
@@ -10,7 +14,6 @@ class Product(BaseModel):
     stock: int
     image: str
 
-# --- ORDENES ---
 class OrderItem(BaseModel):
     product_id: int
     name: str
@@ -23,9 +26,8 @@ class Order(BaseModel):
     total: int
     status: str = "recibido"
 
-# --- NUEVO: USUARIOS (ÉPICA 1) ---
 class User(BaseModel):
     email: str
-    password: str  # En un caso real, esto se encripta. Para el taller, texto plano.
+    password: str
     name: str
-    role: str = "cliente" # cliente o admin
+    role: str = "cliente"
