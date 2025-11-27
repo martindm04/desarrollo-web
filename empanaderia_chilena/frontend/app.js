@@ -8,20 +8,26 @@ const cartCountElement = document.getElementById('cart-count');
 let productsDB = [];
 let cart = [];
 let currentUser = null;
+let currentToken = null; // NUEVO: Guardamos el token JWT aquí
 let selectedProductForModal = null;
 let tempQty = 1;
 
+// Variables Carrusel
+let currentSlide = 0;
+let totalSlides = 0;
+let carouselInterval;
+let featuredProducts = [];
+
 // --- 2. INICIO Y EVENTOS ---
 async function init() {
+    loadSessionFromStorage(); // Cargar usuario y token primero
     await fetchProducts();
     loadCartFromStorage();
-    loadSessionFromStorage();
-    setupGlobalEvents(); // Punto 1: ESC
-    loadDynamicCarousel(); // Punto 2: Carrusel dinámico
+    setupGlobalEvents();
+    loadDynamicCarousel();
 }
 
 function setupGlobalEvents() {
-    // Cerrar modales con ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
@@ -30,80 +36,36 @@ function setupGlobalEvents() {
     });
 }
 
-// Punto 2: Carrusel Dinámico (Muestra 3 productos al azar)
-// --- CARRUSEL HERO INTELIGENTE ---
-let carouselInterval;
+function saveCartToStorage() { localStorage.setItem('empanada_cart', JSON.stringify(cart)); }
+function loadCartFromStorage() {
+    const saved = localStorage.getItem('empanada_cart');
+    if (saved) { cart = JSON.parse(saved); updateCartUI(); }
+}
 
-function loadDynamicCarousel() {
-    const track = document.getElementById('carousel-track');
-    const dotsContainer = document.getElementById('carousel-dots');
-    
-    // 1. Filtrar productos que tengan FOTO REAL (URL http) y Stock
-    const candidates = productsDB.filter(p => p.image && p.image.startsWith('http') && p.stock > 0);
-    
-    if (candidates.length === 0) {
-        document.getElementById('main-carousel').style.display = 'none';
-        return;
+// --- GESTIÓN DE SESIÓN SEGURA (JWT) ---
+function saveSessionToStorage() {
+    if (currentUser && currentToken) {
+        localStorage.setItem('empanada_user', JSON.stringify(currentUser));
+        localStorage.setItem('empanada_token', currentToken);
     }
-
-    // Tomar máximo 3 destacados
-    const featured = candidates.slice(0, 3);
-    
-    track.innerHTML = '';
-    dotsContainer.innerHTML = '';
-
-    featured.forEach((p, index) => {
-        // Crear Slide
-        const item = document.createElement('div');
-        item.className = 'carousel-item';
-        // Fondo sutil basado en categoría
-        const bgColor = p.category === 'horno' ? '#FFF3E0' : (p.category === 'frita' ? '#FFFDE7' : '#E3F2FD');
-        item.style.backgroundColor = bgColor;
-
-        item.innerHTML = `
-            <div class="carousel-text">
-                <span class="badge ${p.category}" style="position:static; display:inline-block; margin-bottom:10px;">${p.category}</span>
-                <h2>${p.name}</h2>
-                <p>Deliciosa preparación artesanal.</p>
-                <span class="price-tag">$${p.price.toLocaleString('es-CL')}</span>
-                <button class="btn-primary" style="width:auto; padding: 12px 30px; font-size:1.1rem;" onclick="openAddToCartModal(${p.id})">
-                    ¡Lo Quiero! 🛒
-                </button>
-            </div>
-            <div class="carousel-image">
-                <img src="${p.image}" alt="${p.name}">
-            </div>
-        `;
-        track.appendChild(item);
-
-        // Crear Punto
-        const dot = document.createElement('div');
-        dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
-        dot.onclick = () => goToSlide(index);
-        dotsContainer.appendChild(dot);
-    });
-
-    startCarouselAutoPlay(featured.length);
 }
 
-function goToSlide(index) {
-    const track = document.getElementById('carousel-track');
-    track.style.transform = `translateX(-${index * 100}%)`;
+function loadSessionFromStorage() {
+    const savedUser = localStorage.getItem('empanada_user');
+    const savedToken = localStorage.getItem('empanada_token');
     
-    // Actualizar puntos
-    document.querySelectorAll('.carousel-dot').forEach((d, i) => {
-        d.className = `carousel-dot ${i === index ? 'active' : ''}`;
-    });
+    if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        currentToken = savedToken;
+        updateUserUI();
+    }
 }
 
-function startCarouselAutoPlay(count) {
-    let current = 0;
-    if (carouselInterval) clearInterval(carouselInterval);
-    
-    carouselInterval = setInterval(() => {
-        current = (current + 1) % count;
-        goToSlide(current);
-    }, 5000); // Cambia cada 5 segundos
+function getAuthHeader() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentToken}` // Header clave para seguridad
+    };
 }
 
 // --- 3. UTILIDADES ---
@@ -127,23 +89,13 @@ function handleEnter(event, nextId) {
     }
 }
 
-function saveCartToStorage() { localStorage.setItem('empanada_cart', JSON.stringify(cart)); }
-function loadCartFromStorage() {
-    const saved = localStorage.getItem('empanada_cart');
-    if (saved) { cart = JSON.parse(saved); updateCartUI(); }
-}
-function saveSessionToStorage() { localStorage.setItem('empanada_user', JSON.stringify(currentUser)); }
-function loadSessionFromStorage() {
-    const saved = localStorage.getItem('empanada_user');
-    if (saved) { currentUser = JSON.parse(saved); updateUserUI(); }
-}
-
-// --- 4. CATÁLOGO Y FILTROS (Punto 5 Arreglado) ---
+// --- 4. CATÁLOGO Y CARRUSEL ---
 async function fetchProducts() {
     try {
         const res = await fetch('http://127.0.0.1:8000/products');
         productsDB = await res.json();
         renderProducts(productsDB);
+        loadDynamicCarousel(); // Recargar carrusel con datos frescos
     } catch (e) { console.error(e); }
 }
 
@@ -151,55 +103,116 @@ function renderProducts(products) {
     grid.innerHTML = '';
     products.forEach(p => {
         const isStock = p.stock > 0;
-        let imgContent = p.image.startsWith('http') 
-            ? `<img src="${p.image}" alt="${p.name}">` 
-            : `<span style="font-size:3rem;">🥟</span>`;
+        let imgContent = p.image.startsWith('http') ? `<img src="${p.image}" alt="${p.name}">` : `<span style="font-size:3rem;">🥟</span>`;
         
         const card = document.createElement('div');
-        // Punto 6: Clase out-of-stock si stock es 0
         card.className = `card ${!isStock ? 'out-of-stock' : ''}`;
         
         card.onclick = (e) => {
-            // Evitar abrir si se hace clic en botones internos (si hubieran)
-            if (isStock) openAddToCartModal(p.id);
-            else showToast("Producto agotado", "error");
+            if (e.target.tagName !== 'BUTTON' && isStock) openAddToCartModal(p.id);
         };
 
         card.innerHTML = `
             <span class="badge ${p.category}">${p.category}</span>
             <div class="card-img-container">${imgContent}</div>
             <div class="card-body">
-                <h3 class="card-title">${p.name}</h3>
-                <div class="card-footer">
-                    <span class="card-price">$${p.price.toLocaleString('es-CL')}</span>
+                <div class="card-title">${p.name}</div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="font-weight:bold; color:var(--primary);">$${p.price.toLocaleString('es-CL')}</span>
                     <small style="color:${isStock ? 'green' : 'red'}">${isStock ? 'Stock: '+p.stock : 'Agotado'}</small>
                 </div>
+                <button class="btn-add-card" ${!isStock ? 'disabled':''} onclick="openAddToCartModal(${p.id})">
+                    ${isStock ? 'Agregar' : 'Sin Stock'}
+                </button>
             </div>
         `;
         grid.appendChild(card);
     });
 }
 
-// Punto 5: Filtro arreglado
 function filterProducts() {
     const searchText = document.getElementById('search-bar').value.toLowerCase();
     const selectedCategory = document.getElementById('category-filter').value;
-
     const filtered = productsDB.filter(product => {
         const matchesText = product.name.toLowerCase().includes(searchText);
         const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
         return matchesText && matchesCategory;
     });
-
     renderProducts(filtered);
 }
-
-// Listeners para filtros
 document.getElementById('search-bar').addEventListener('keyup', filterProducts);
 document.getElementById('category-filter').addEventListener('change', filterProducts);
 
+// --- CARRUSEL LÓGICA ---
+function loadDynamicCarousel() {
+    const track = document.getElementById('carousel-track');
+    const dotsContainer = document.getElementById('carousel-dots');
+    
+    if(!track) return;
 
-// --- 5. MODAL DE CANTIDAD ---
+    featuredProducts = productsDB.filter(p => p.image && p.image.startsWith('http') && p.stock > 0).slice(0, 5);
+    totalSlides = featuredProducts.length;
+    currentSlide = 0;
+    
+    if(featuredProducts.length === 0) {
+        document.getElementById('main-carousel').style.display = 'none';
+        return;
+    } else {
+        document.getElementById('main-carousel').style.display = 'block';
+    }
+
+    track.innerHTML = '';
+    dotsContainer.innerHTML = '';
+
+    featuredProducts.forEach((p, index) => {
+        const item = document.createElement('div');
+        item.className = 'carousel-item';
+        const bgColor = p.category === 'horno' ? '#FFF3E0' : (p.category === 'frita' ? '#FFFDE7' : '#E3F2FD');
+        item.style.backgroundColor = bgColor;
+
+        item.innerHTML = `
+            <div class="carousel-text">
+                <span class="badge ${p.category}" style="position:relative; top:0; right:0; margin-bottom:10px; display:inline-block;">${p.category}</span>
+                <h2>${p.name}</h2>
+                <p>Deliciosa preparación artesanal.</p>
+                <span class="price">$${p.price.toLocaleString('es-CL')}</span>
+                <button class="btn-add-card" style="width:auto; border-radius:20px; padding:10px 30px; background:var(--secondary);" onclick="openAddToCartModal(${p.id})">
+                    ¡Lo Quiero! 🛒
+                </button>
+            </div>
+            <div class="carousel-image">
+                <img src="${p.image}" alt="${p.name}">
+            </div>
+        `;
+        track.appendChild(item);
+
+        const dot = document.createElement('div');
+        dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
+        dot.onclick = () => goToSlide(index);
+        dotsContainer.appendChild(dot);
+    });
+
+    startCarouselAutoPlay();
+}
+
+function nextSlide() { if(totalSlides) { currentSlide = (currentSlide + 1) % totalSlides; updateCarousel(); resetTimer(); } }
+function prevSlide() { if(totalSlides) { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateCarousel(); resetTimer(); } }
+function goToSlide(index) { currentSlide = index; updateCarousel(); resetTimer(); }
+function updateCarousel() {
+    const track = document.getElementById('carousel-track');
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        if (i === currentSlide) d.classList.add('active'); else d.classList.remove('active');
+    });
+}
+function startCarouselAutoPlay() {
+    if (carouselInterval) clearInterval(carouselInterval);
+    carouselInterval = setInterval(nextSlide, 5000);
+}
+function resetTimer() { clearInterval(carouselInterval); startCarouselAutoPlay(); }
+
+
+// --- 5. MODAL CANTIDAD ---
 function openAddToCartModal(id) {
     selectedProductForModal = productsDB.find(p => p.id === id);
     tempQty = 1;
@@ -207,15 +220,13 @@ function openAddToCartModal(id) {
     document.getElementById('modal-qty').innerText = tempQty;
     openModal('add-to-cart-modal');
 }
-
-function adjustModalQty(delta) {
-    const newQty = tempQty + delta;
-    if (newQty >= 1 && newQty <= selectedProductForModal.stock) {
-        tempQty = newQty;
+function adjustModalQty(d) {
+    const n = tempQty + d;
+    if(n >= 1 && n <= selectedProductForModal.stock) {
+        tempQty = n;
         document.getElementById('modal-qty').innerText = tempQty;
     }
 }
-
 function confirmAddFromModal(action) {
     addToCart(selectedProductForModal.id, tempQty);
     closeModal('add-to-cart-modal');
@@ -252,10 +263,14 @@ function updateCartUI() {
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML = `
-            <div><strong>${item.name}</strong><br>$${item.price} x ${item.quantity}</div>
-            <div>
-                <button onclick="updateItemQty(${item.id}, -1)" style="padding:2px 8px;">-</button>
-                <button onclick="updateItemQty(${item.id}, 1)" style="padding:2px 8px;">+</button>
+            <div class="cart-item-info">
+                <h4 style="margin:0; font-size:1rem;">${item.name}</h4>
+                <p style="margin:5px 0 0; color:#666;">$${item.price.toLocaleString('es-CL')} x ${item.quantity}</p>
+            </div>
+            <div class="cart-controls" style="display:flex; align-items:center; gap:10px;">
+                <button class="qty-btn qty-sm" onclick="updateItemQty(${item.id}, -1)">-</button>
+                <span style="font-weight:bold; min-width:20px; text-align:center;">${item.quantity}</span>
+                <button class="qty-btn qty-sm" onclick="updateItemQty(${item.id}, 1)">+</button>
             </div>
         `;
         cartItemsContainer.innerHTML += div.outerHTML;
@@ -265,54 +280,51 @@ function updateCartUI() {
     document.getElementById('cart-tax').innerText = `$${(total - net).toLocaleString('es-CL')}`;
     cartTotalElement.innerText = `$${total.toLocaleString('es-CL')}`;
     cartCountElement.innerText = count;
+    
+    if (cart.length === 0) cartItemsContainer.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Tu carrito está vacío 🥟</p>';
 }
 
 function updateItemQty(id, delta) {
     const item = cart.find(i => i.id === id);
-    const info = productsDB.find(p => p.id === id); // Info fresca para validar stock
-    
-    // Si estamos sumando, chequear stock
-    if (delta > 0 && item.quantity >= info.stock) {
-        return showToast("Stock máximo alcanzado", "info");
-    }
+    const info = productsDB.find(p => p.id === id);
+    // Validación stock al sumar en carrito
+    if (delta > 0 && item.quantity >= info.stock) return showToast("Stock máximo alcanzado", "info");
 
     item.quantity += delta;
     if (item.quantity <= 0) cart = cart.filter(i => i.id !== id);
-    
     saveCartToStorage();
     updateCartUI();
 }
 
-// --- 7. CHECKOUT Y PAGO (Punto 4: Descontar Stock) ---
+// --- 7. CHECKOUT Y PAGO (CON SEGURIDAD) ---
 function openCheckoutModal() {
     if (cart.length === 0) return showToast("Carrito vacío", "error");
     if (!currentUser) {
         showToast("Inicia sesión para comprar", "info");
         return openModal('login-modal');
     }
-    // Mostrar total
     const total = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     document.getElementById('modal-total-amount').innerText = `$${total.toLocaleString('es-CL')}`;
     document.getElementById('modal-user-email').innerText = currentUser.email;
-    
-    toggleCart(); // Cerrar sidebar para que no tape el modal (Punto 6)
+    toggleCart(); 
     openModal('checkout-modal');
 }
 
 async function confirmCheckout() {
     const orderData = {
-        customer_email: currentUser.email,
+        customer_email: currentUser.email, // Esto se sobrescribe en backend con el token, pero se envía igual
         items: cart.map(i => ({ product_id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
         total: cart.reduce((sum, i) => sum + (i.price * i.quantity), 0)
     };
 
     try {
         const res = await fetch('http://127.0.0.1:8000/orders', {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData)
+            method: 'POST', 
+            headers: getAuthHeader(), // <--- HEADER CON TOKEN
+            body: JSON.stringify(orderData)
         });
         
         if(!res.ok) {
-            // Manejar error de stock (Backend responde 400)
             const err = await res.json();
             throw new Error(err.detail || "Error al procesar");
         }
@@ -320,19 +332,39 @@ async function confirmCheckout() {
         const result = await res.json();
         closeModal('checkout-modal');
         showToast(`¡Orden exitosa! ID: #${result.id.slice(-4)}`, "success");
-        
-        cart = []; 
-        saveCartToStorage(); 
-        updateCartUI();
-        fetchProducts(); // Recargar productos para ver nuevo stock (Punto 4)
+        cart = []; saveCartToStorage(); updateCartUI(); fetchProducts();
 
     } catch (e) { 
         showToast(e.message, "error"); 
-        closeModal('checkout-modal'); // Cerrar modal si falla para revisar
+        closeModal('checkout-modal'); 
     }
 }
 
-// --- 8. USUARIOS ---
+// --- 8. AUTHENTICATION (LOGIN CON TOKEN) ---
+async function registerUser() {
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-pass').value;
+
+    if (!name || !email || !password) return showToast("Faltan datos", "error");
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail);
+        }
+
+        showToast("¡Cuenta creada! Inicia sesión.", "success");
+        closeModal('register-modal');
+        openModal('login-modal');
+    } catch (e) { showToast(e.message, "error"); }
+}
+
 async function loginUser() {
     const email = document.getElementById('login-email').value;
     const pass = document.getElementById('login-pass').value;
@@ -340,9 +372,14 @@ async function loginUser() {
         const res = await fetch('http://127.0.0.1:8000/login', {
             method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password: pass, name:'temp'})
         });
-        if(!res.ok) throw new Error("Datos incorrectos");
-        currentUser = await res.json();
+        if(!res.ok) throw new Error("Credenciales incorrectas");
+        
+        const data = await res.json();
+        // Guardar token y usuario
+        currentUser = data.user;
+        currentToken = data.access_token;
         saveSessionToStorage();
+        
         updateUserUI();
         closeModal('login-modal');
         showToast(`Hola ${currentUser.name}`, "success");
@@ -355,7 +392,9 @@ function updateUserUI() {
     infoDiv.classList.remove('hidden'); 
     infoDiv.style.display = 'flex';
     document.getElementById('user-name-display').innerText = currentUser.name;
-    if(currentUser.email.includes('@admin.com')) {
+    
+    // Mostrar link admin si el rol es admin
+    if(currentUser.role === 'admin') {
         document.getElementById('admin-link').classList.remove('hidden');
         document.getElementById('admin-link').style.display = 'inline';
     }
@@ -363,69 +402,70 @@ function updateUserUI() {
 
 function logout() {
     currentUser = null;
+    currentToken = null;
     localStorage.removeItem('empanada_user');
+    localStorage.removeItem('empanada_token');
     location.reload();
 }
 
-// --- 9. HISTORIAL DE PEDIDOS ---
+// --- 9. HISTORIAL (CON TOKEN) ---
 async function openOrderHistory() {
     openModal('history-modal');
     const tbody = document.getElementById('history-table-body');
     tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
-    const res = await fetch(`http://127.0.0.1:8000/orders/user/${currentUser.email}`);
-    const orders = await res.json();
-    tbody.innerHTML = '';
-    if(orders.length === 0) document.getElementById('no-history-msg').classList.remove('hidden');
-    else {
-        document.getElementById('no-history-msg').classList.add('hidden');
-        orders.reverse().forEach(o => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>#${o.id.slice(-4)}</td><td>$${o.total.toLocaleString('es-CL')}</td><td>${o.status}</td><td>${o.items.length} items</td>`;
-            tbody.appendChild(tr);
+    
+    try {
+        const res = await fetch(`http://127.0.0.1:8000/orders/user/${currentUser.email}`, {
+            headers: getAuthHeader() // <--- HEADER CON TOKEN
         });
-    }
+        if (!res.ok) throw new Error("Error cargando historial");
+        
+        const orders = await res.json();
+        tbody.innerHTML = '';
+        if(orders.length === 0) document.getElementById('no-history-msg').classList.remove('hidden');
+        else {
+            document.getElementById('no-history-msg').classList.add('hidden');
+            orders.reverse().forEach(o => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>#${o.id.slice(-4)}</td><td>$${o.total.toLocaleString('es-CL')}</td><td>${o.status}</td><td>${o.items.length} items</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Error</td></tr>'; }
 }
 
-// --- 10. PANEL DE ADMINISTRACIÓN (MEJORADO) ---
+// --- 10. ADMIN (CON TOKEN) ---
 function toggleAdminPanel() {
     const panel = document.getElementById('admin-panel');
-    const mainGrid = document.getElementById('product-grid');
-    const carousel = document.getElementById('main-carousel');
-    const controls = document.querySelector('.controls');
-
-    if (panel.classList.contains('hidden')) {
-        // Mostrar Admin
+    // ... lógica visual igual ...
+    const elToHide = [grid, document.getElementById('main-carousel'), document.querySelector('.controls'), document.getElementById('no-results')];
+    if(panel.classList.contains('hidden')) {
         panel.classList.remove('hidden');
-        mainGrid.classList.add('hidden');
-        carousel.classList.add('hidden');
-        controls.classList.add('hidden');
+        elToHide.forEach(e => e?.classList.add('hidden'));
         loadAdminTable();
     } else {
-        // Mostrar Tienda
         panel.classList.add('hidden');
-        mainGrid.classList.remove('hidden');
-        carousel.classList.remove('hidden');
-        controls.classList.remove('hidden');
+        elToHide.forEach(e => e?.classList.remove('hidden'));
         fetchProducts();
     }
 }
 
-// Cambio de Pestañas Admin (Punto 3)
-function switchAdminTab(tabName) {
-    // Ocultar todos los contenidos y desactivar botones
-    document.querySelectorAll('.admin-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+function switchAdminTab(tab) {
+    document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active')); // Corregido para usar clase active
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const content = document.getElementById(`tab-${tab}`);
+    if(content) content.classList.add('active'); // Corregido
+    
+    if(event && event.currentTarget) event.currentTarget.classList.add('active');
 
-    // Activar seleccionado
-    document.getElementById(`tab-${tabName}`).classList.add('active');
-    // Buscar el botón correspondiente (truco simple: por orden o texto, aquí asumimos por orden de clic)
-    event.target.classList.add('active');
-
-    if (tabName === 'orders') loadAdminOrders();
-    if (tabName === 'products') loadAdminTable();
+    if(tab === 'orders') {
+        loadAdminOrders();
+        if(myChart) setTimeout(() => myChart.resize(), 100); 
+    }
+    else loadAdminTable();
 }
 
-// Cargar Productos (Tabla 1)
 function loadAdminTable() {
     const tbody = document.getElementById('admin-table-body');
     tbody.innerHTML = '';
@@ -437,122 +477,61 @@ function loadAdminTable() {
             <td>$${p.price}</td>
             <td>${p.stock}</td>
             <td>
-                <button onclick="editProduct(${p.id})" style="background:#f1c40f; border:none; padding:5px;">✏️</button>
-                <button onclick="deleteProduct(${p.id})" style="background:#e74c3c; color:white; border:none; padding:5px;">🗑️</button>
+                <button onclick="editProduct(${p.id})" style="background:#f1c40f; border:none; padding:5px; border-radius:4px;">✏️</button>
+                <button onclick="deleteProduct(${p.id})" style="background:#e74c3c; color:white; border:none; padding:5px; border-radius:4px;">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Cargar Ventas (Tabla 2 - Punto 3)
-// Variable global para el gráfico (para poder destruirlo y redibujarlo)
+// Ventas Admin (Protegido)
 let myChart = null;
-
 async function loadAdminOrders() {
     const tbody = document.getElementById('admin-orders-body');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando datos...</td></tr>';
-    
+    tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
     try {
-        const res = await fetch('http://127.0.0.1:8000/orders');
+        const res = await fetch('http://127.0.0.1:8000/orders', {
+            headers: getAuthHeader() // <--- HEADER CON TOKEN
+        });
         const orders = await res.json();
-        
         tbody.innerHTML = '';
         
-        // 1. Variables para estadística
-        const salesStats = {}; // { "Empanada Pino": 10, "Bebida": 5 }
-
-        // 2. Procesar órdenes
+        const salesStats = {};
         orders.forEach(o => {
-            // Llenar tabla
             const summary = o.items.map(i => {
-                // Sumar para estadística
-                if (salesStats[i.name]) {
-                    salesStats[i.name] += i.quantity;
-                } else {
-                    salesStats[i.name] = i.quantity;
-                }
+                if (salesStats[i.name]) salesStats[i.name] += i.quantity; else salesStats[i.name] = i.quantity;
                 return `${i.quantity}x ${i.name}`;
             }).join(', ');
-
             const tr = document.createElement('tr');
-            tr.style.borderBottom = "1px solid #eee";
-            tr.innerHTML = `
-                <td style="padding:12px; font-family:monospace;">#${o.id.slice(-6)}</td>
-                <td style="padding:12px;">${o.customer_email}</td>
-                <td style="padding:12px;">$${o.total.toLocaleString('es-CL')}</td>
-                <td style="padding:12px; font-size:0.9em; color:#555;">${summary}</td>
-            `;
+            tr.innerHTML = `<td>#${o.id.slice(-6)}</td><td>${o.customer_email}</td><td>$${o.total.toLocaleString('es-CL')}</td><td style="font-size:0.8em">${summary}</td>`;
             tbody.appendChild(tr);
         });
-
-        // 3. Dibujar Gráfico
         renderChart(salesStats);
-
-    } catch (e) { 
-        console.error(e);
-        tbody.innerHTML = '<tr><td colspan="4" style="color:red; text-align:center;">Error al cargar ventas</td></tr>'; 
-    }
+    } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Error</td></tr>'; }
 }
 
-// Función para dibujar con Chart.js
 function renderChart(stats) {
     const ctx = document.getElementById('salesChart');
-    
-    // Si ya existe un gráfico previo, lo destruimos para no sobreponer
-    if (myChart) {
-        myChart.destroy();
-    }
-
-    // Preparar datos para Chart.js
+    if (myChart) myChart.destroy();
     const labels = Object.keys(stats);
     const data = Object.values(stats);
-
+    
     myChart = new Chart(ctx, {
-        type: 'bar', // Puede ser 'pie', 'doughnut', 'line'
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Unidades Vendidas',
                 data: data,
-                backgroundColor: [
-                    'rgba(218, 41, 28, 0.7)',  // Rojo Chile
-                    'rgba(0, 57, 166, 0.7)',   // Azul Chile
-                    'rgba(241, 196, 15, 0.7)', // Amarillo
-                    'rgba(46, 204, 113, 0.7)', // Verde
-                    'rgba(155, 89, 182, 0.7)'  // Morado
-                ],
-                borderColor: [
-                    'rgba(218, 41, 28, 1)',
-                    'rgba(0, 57, 166, 1)',
-                    'rgba(241, 196, 15, 1)',
-                    'rgba(46, 204, 113, 1)',
-                    'rgba(155, 89, 182, 1)'
-                ],
+                backgroundColor: ['#D32F2F', '#1565C0', '#FBC02D', '#2ECC71'],
                 borderWidth: 1
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 } // Para no mostrar decimales en ventas
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Total de Productos Vendidos (Histórico)'
-                }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
 }
 
-// Funciones CRUD (Igual que antes)
 async function saveProduct() {
     const id = parseInt(document.getElementById('adm-id').value);
     const name = document.getElementById('adm-name').value;
@@ -568,11 +547,14 @@ async function saveProduct() {
     const url = exists ? `http://127.0.0.1:8000/products/${id}` : 'http://127.0.0.1:8000/products';
 
     try {
-        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(productData)});
+        const res = await fetch(url, { 
+            method, 
+            headers: getAuthHeader(), // <--- HEADER CON TOKEN
+            body: JSON.stringify(productData)
+        });
         if(!res.ok) throw new Error("Error guardando");
         showToast("Guardado exitoso", "success");
-        const r = await fetch('http://127.0.0.1:8000/products');
-        productsDB = await r.json();
+        fetchProducts(); 
         loadAdminTable();
         clearAdminForm();
     } catch(e) { showToast(e.message, "error"); }
@@ -586,15 +568,21 @@ function editProduct(id) {
     document.getElementById('adm-price').value = p.price;
     document.getElementById('adm-stock').value = p.stock;
     document.getElementById('adm-image').value = p.image;
+    document.getElementById('admin-panel').scrollIntoView({behavior: 'smooth'});
 }
 
 async function deleteProduct(id) {
     if(!confirm("¿Eliminar?")) return;
-    await fetch(`http://127.0.0.1:8000/products/${id}`, {method:'DELETE'});
-    showToast("Eliminado", "info");
-    const r = await fetch('http://127.0.0.1:8000/products');
-    productsDB = await r.json();
-    loadAdminTable();
+    try {
+        const res = await fetch(`http://127.0.0.1:8000/products/${id}`, {
+            method:'DELETE',
+            headers: getAuthHeader() // <--- HEADER CON TOKEN
+        });
+        if (!res.ok) throw new Error("Error");
+        showToast("Eliminado", "info");
+        fetchProducts();
+        loadAdminTable();
+    } catch (e) { showToast("Error al eliminar", "error"); }
 }
 
 function clearAdminForm() {

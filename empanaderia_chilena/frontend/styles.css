@@ -23,44 +23,80 @@ body {
     padding-bottom: 80px; 
 }
 
-/* --- HEADER --- */
+/* --- HEADER MEJORADO --- */
 header {
     background-color: var(--glass);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px); /* Un poco más de desenfoque */
     position: sticky; top: 0; z-index: 1000;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* Sombra más suave */
 }
 
 nav {
-    max-width: 1200px; margin: 0 auto; padding: 0.8rem 1.5rem;
+    max-width: 1200px; margin: 0 auto; padding: 1rem 2rem;
     display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.3s ease;
 }
 
-/* CORRECCIÓN ERROR VS CODE: Se agregan ambas propiedades */
+/* Logo clicable */
 .logo {
-    font-size: 1.4rem; font-weight: 800; cursor: pointer;
+    font-size: 1.5rem; font-weight: 800; cursor: pointer;
     background: linear-gradient(90deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    background-clip: text; /* <--- ESTA LÍNEA ARREGLA LA ADVERTENCIA */
+    -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent;
-    color: var(--primary); /* Fallback */
+    transition: opacity 0.2s;
 }
+.logo:hover { opacity: 0.8; }
 
-.nav-group { display: flex; align-items: center; gap: 20px; }
+.nav-group { display: flex; align-items: center; gap: 25px; transition: gap 0.3s ease; }
 
 .nav-link { 
     text-decoration: none; color: var(--text-main); font-weight: 600; font-size: 0.95rem; 
-    transition: color 0.2s; 
+    transition: color 0.2s; cursor: pointer;
 }
 .nav-link:hover { color: var(--primary); }
+
+/* Nuevo estilo para el botón Registrarse */
+.btn-register {
+    background: var(--primary); color: white !important;
+    padding: 8px 20px; border-radius: 30px;
+    box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3); /* Sombra roja suave */
+    transition: all 0.2s;
+}
+.btn-register:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
+}
 
 .cart-icon { 
     cursor: pointer; background: var(--text-main); color: white; 
     padding: 8px 16px; border-radius: 30px; display: flex; align-items: center; gap: 8px;
-    font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.2s;
+    font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s;
 }
 .cart-icon:hover { transform: scale(1.05); background: var(--primary); }
+
+
+/* --- RESPONSIVIDAD DEL HEADER (Para celulares) --- */
+@media (max-width: 768px) {
+    nav { padding: 0.8rem 1rem; } /* Menos padding lateral */
+    .logo { font-size: 1.2rem; } /* Logo más pequeño */
+    .nav-group { gap: 10px; } /* Menos espacio entre elementos derechos */
+    .nav-link { font-size: 0.85rem; } /* Texto más pequeño */
+    
+    /* Ajustar botón de registro en móvil */
+    .btn-register {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    /* Ajustar icono de carrito en móvil */
+    .cart-icon {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+    /* Ocultar el saludo "Hola, User" en celulares muy pequeños para ahorrar espacio */
+    .user-greeting { display: none; }
+}
 
 /* --- CARRUSEL --- */
 .carousel {
@@ -153,6 +189,23 @@ select { padding: 0 25px; border-radius: 50px; border: 1px solid #eee; cursor: p
 .admin-table th { background: #F9FAFB; padding: 15px; text-align: left; font-weight: 600; color: var(--text-light); border-bottom: 1px solid #eee; }
 .admin-table td { padding: 15px; border-bottom: 1px solid #eee; vertical-align: middle; }
 
+/* 1. Ocultar todo contenido de admin por defecto */
+.admin-content { 
+    display: none; 
+    animation: fadeIn 0.3s ease-in-out; /* Efecto suave opcional */
+}
+
+/* 2. Mostrar SOLO si tiene la clase 'active' */
+.admin-content.active { 
+    display: block; 
+}
+
+/* Definición de animación suave */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- MODALES Y BOTONES CANTIDAD (ARREGLO DE BOTONES) --- */
 .modal {
     display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
@@ -215,3 +268,42 @@ footer { background: #1a1a1a; color: #ccc; padding: 60px 0 20px; margin-top: 60p
 /* Utils */
 .hidden { display: none !important; }
 .out-of-stock { opacity: 0.6; filter: grayscale(1); pointer-events: none; }
+
+.qty-sm {
+    width: 30px;       /* Más pequeño que el del modal (que es 40px) */
+    height: 30px;
+    font-size: 1rem;   /* Letra un poco más chica */
+    border-width: 1px; /* Borde más fino */
+    margin: 0;         /* Sin márgenes extra */
+}
+
+/* Ajuste para alinear bien el texto y los botones en la lista */
+.cart-item {
+    align-items: center; /* Centrar verticalmente */
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* --- MEJORA BOTÓN CERRAR MODAL (LA "X") --- */
+
+/* Hacemos que el área clickable sea mucho más grande */
+.modal-content .close-modal {
+    position: absolute;
+    top: 10px;       /* Un poco más arriba */
+    right: 15px;     /* Un poco más a la derecha */
+    font-size: 3rem; /* ¡X mucho más grande! */
+    line-height: 0.7; /* Altura de línea compacta para centrar la X verticalmente */
+    font-weight: 300; /* Un poco más delgada para que se vea elegante */
+    color: #aaa;     /* Color gris suave inicial */
+    cursor: pointer;
+    padding: 10px;   /* Área de "colchón" invisible alrededor para facilitar el clic */
+    transition: all 0.2s ease;
+    z-index: 10;     /* Asegurar que esté por encima de todo */
+}
+
+/* Efecto al pasar el mouse: se pone roja y gira un poco */
+.modal-content .close-modal:hover {
+    color: var(--primary); /* Se pone del color rojo corporativo */
+    transform: scale(1.1) rotate(90deg); /* Efecto visual de giro */
+}

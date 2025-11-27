@@ -11,22 +11,21 @@
 
     <header>
         <nav>
-            <div class="nav-group">
-                <div class="logo" style="font-size:1.5rem; font-weight:bold;">🥟 La Chilena</div>
-                <a href="#" onclick="window.location.reload()">Inicio</a>
+            <div class="logo clickable" onclick="window.location.reload()">
+                🥟 La Chilena
             </div>
-
+            
             <div class="nav-group">
                 <div id="auth-links">
-                    <a href="#" onclick="openModal('login-modal')">Iniciar Sesión</a>
-                    <a href="#" onclick="openModal('register-modal')" style="background: white; color: var(--chile-red);">Registrarse</a>
+                    <a href="#" class="nav-link" onclick="openModal('login-modal')">Entrar</a>
+                    <a href="#" class="nav-link btn-register" onclick="openModal('register-modal')">Registrarse</a>
                 </div>
 
-                <div id="user-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
-                    <span id="user-name-display">Usuario</span>
-                    <a href="#" onclick="openOrderHistory()">📜 Mis Pedidos</a>
-                    <a href="#" id="admin-link" class="hidden" onclick="toggleAdminPanel()" style="color: #ffd700;">⚙️ Admin</a>
-                    <a href="#" onclick="logout()" style="opacity: 0.8;">Salir</a>
+                <div id="user-info" class="hidden" style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-weight:600;" class="user-greeting">Hola, <span id="user-name-display">User</span></span>
+                    <a href="#" class="nav-link" onclick="openOrderHistory()">Mis Pedidos</a>
+                    <a href="#" id="admin-link" class="nav-link hidden" onclick="toggleAdminPanel()" style="color:var(--accent);">Admin</a>
+                    <a href="#" class="nav-link" onclick="logout()">Salir</a>
                 </div>
 
                 <div class="cart-icon" onclick="toggleCart()">
@@ -209,6 +208,8 @@
 
     <script src="app.js"></script>
 
+
+</body>
 <footer>
         <div class="footer-content">
             <div class="footer-col">
@@ -235,5 +236,4 @@
             <p>&copy; 2025 Empanadería La Chilena. Todos los derechos reservados.</p>
         </div>
     </footer>
-</body>
 </html>
