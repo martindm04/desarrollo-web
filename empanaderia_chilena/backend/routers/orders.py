@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from database import db
 from models import Order
 from auth import get_current_user, get_admin
+from bson import ObjectId
 
 router = APIRouter(tags=["Ordenes"])
 
@@ -38,3 +39,25 @@ def my_orders(email: str, current_user: dict = Depends(get_current_user)):
 def all_orders():
     cursor = db.orders.find().sort("_id", -1).limit(100)
     return [{"id": str(d.pop("_id")), **d} for d in cursor]
+  
+@router.patch("/orders/{order_id}/status", dependencies=[Depends(get_admin)])
+def update_order_status(order_id: str, status: str = Body(..., embed=True)):
+    # Validamos que el estado sea uno permitido
+    valid_statuses = ["recibido", "preparando", "listo", "entregado"]
+    if status not in valid_statuses:
+        raise HTTPException(400, f"Estado inválido. Use: {valid_statuses}")
+
+    try:
+        # Intentamos convertir a ObjectId si es necesario, o buscamos por string
+        oid = ObjectId(order_id)
+        res = db.orders.update_one({"_id": oid}, {"$set": {"status": status}})
+    except:
+        # Si falla la conversión a ObjectId (por si acaso), intentamos buscar por id string si lo tuvieras
+        raise HTTPException(400, "ID de orden inválido")
+    
+    if res.matched_count == 0:
+        raise HTTPException(404, "Orden no encontrada")
+        
+    return {"message": f"Orden actualizada a {status}"}
+  
+  

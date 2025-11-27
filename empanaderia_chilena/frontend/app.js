@@ -417,10 +417,76 @@ async function loadSalesMetrics() {
                 }
             }
         });
+renderAdminOrdersTable(orders); // Pasamos las órdenes que ya descargamos
 
     } catch (e) {
         console.error(e);
         toast("Error cargando métricas", "error");
+    }
+}
+
+function renderAdminOrdersTable(orders) {
+    const tbody = document.getElementById("admin-orders-table");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    
+    // Ordenar: Las más recientes primero
+    // Nota: Si 'orders' ya viene ordenado del backend mejor, pero por seguridad:
+    const sortedOrders = orders.reverse(); 
+
+    sortedOrders.forEach(o => {
+        // Selector de estado
+        const statusOptions = ['recibido', 'preparando', 'listo', 'entregado'];
+        let optionsHTML = "";
+        
+        statusOptions.forEach(st => {
+            const selected = o.status === st ? "selected" : "";
+            optionsHTML += `<option value="${st}" ${selected}>${st.toUpperCase()}</option>`;
+        });
+
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #eee";
+        tr.innerHTML = `
+            <td style="padding:15px; font-family:monospace;">...${o.id.slice(-6)}</td>
+            <td style="padding:15px;">${o.customer_email}</td>
+            <td style="padding:15px; font-size:0.9rem;">
+                ${o.items.map(i => `${i.quantity}x ${i.name}`).join('<br>')}
+            </td>
+            <td style="padding:15px;">$${o.total.toLocaleString('es-CL')}</td>
+            <td style="padding:15px;">
+                <select 
+                    onchange="changeOrderStatus('${o.id}', this.value)"
+                    style="padding:5px; border-radius:4px; border:1px solid #ddd; background:${getStatusColor(o.status)}; color:white; font-weight:bold; cursor:pointer;"
+                >
+                    ${optionsHTML}
+                </select>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Función auxiliar para colores
+function getStatusColor(status) {
+    switch(status) {
+        case 'recibido': return '#3182ce'; // Azul
+        case 'preparando': return '#d69e2e'; // Naranja
+        case 'listo': return '#38a169'; // Verde
+        case 'entregado': return '#718096'; // Gris
+        default: return '#333';
+    }
+}
+
+// Función para llamar a la API
+async function changeOrderStatus(id, newStatus) {
+    try {
+        await api(`/orders/${id}/status`, "PATCH", { status: newStatus });
+        toast(`Orden actualizada a: ${newStatus}`, "success");
+        // Opcional: Recargar para actualizar colores, aunque el select ya cambió
+        loadSalesMetrics(); 
+    } catch (e) {
+        toast("Error actualizando estado", "error");
     }
 }
 
