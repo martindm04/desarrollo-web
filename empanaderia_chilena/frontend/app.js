@@ -185,21 +185,86 @@ function resetAutoSlide() {
 }
 
 // --- CART (CARRITO) ---
+// --- LÓGICA DE SELECCIÓN DE CANTIDAD ---
+
+let tempQty = 1;        // Cantidad temporal seleccionada en el modal
+let tempProduct = null; // Producto que el usuario está mirando
+
+// 1. Esta función ahora se llama desde los botones de la Grilla/Carrusel
 function addToCart(id) {
     const p = state.products.find(x => x.id === id);
     if (!p) return;
-    
-    // Validar si hay stock localmente
     if (p.stock <= 0) return toast("Producto agotado", "error");
 
-    const item = state.cart.find(x => x.id === id);
+    // Guardamos el producto temporalmente
+    tempProduct = p;
+    tempQty = 1;
+
+    // Llenamos el modal con los datos
+    document.getElementById("qty-prod-name").innerText = p.name;
+    document.getElementById("qty-prod-img").src = p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000/static/images/${p.image}`;
+    updateModalUI();
+    
+    openModal("qty-modal");
+}
+
+// 2. Controlar el + y - dentro del modal
+function adjustModalQty(delta) {
+    if (!tempProduct) return;
+    
+    const newQty = tempQty + delta;
+    
+    // Validaciones: Mínimo 1, Máximo el stock disponible
+    if (newQty < 1) return;
+    if (newQty > tempProduct.stock) return toast(`Solo quedan ${tempProduct.stock} unidades`, "error");
+    
+    tempQty = newQty;
+    updateModalUI();
+}
+
+function updateModalUI() {
+    document.getElementById("qty-val").innerText = tempQty;
+    const subtotal = tempProduct.price * tempQty;
+    document.getElementById("qty-subtotal").innerText = `$${subtotal.toLocaleString('es-CL')}`;
+}
+
+// 3. Confirmar la acción (Botones grandes)
+function confirmAdd(goToCheckout) {
+    if (!tempProduct) return;
+
+    // Buscar si ya existe en el carrito para sumar
+    const item = state.cart.find(x => x.id === tempProduct.id);
+    
     if (item) {
-        if (item.quantity < p.stock) item.quantity++;
-        else return toast("No hay más stock disponible", "error");
+        // Si ya existe, validamos que la suma total no supere el stock
+        if (item.quantity + tempQty > tempProduct.stock) {
+            return toast("No puedes agregar más: excede el stock disponible", "error");
+        }
+        item.quantity += tempQty;
     } else {
-        state.cart.push({ ...p, quantity: 1 });
+        // Si es nuevo, lo agregamos
+        state.cart.push({ ...tempProduct, quantity: tempQty });
     }
-    saveCart(); renderCart(); toast("Agregado al carrito", "success");
+
+    // Guardar y Actualizar
+    saveCart();
+    renderCart();
+    closeModal("qty-modal");
+
+    // Feedback visual
+    const cartIcon = document.querySelector(".cart-icon");
+    if(cartIcon) {
+        cartIcon.classList.add("cart-shake");
+        setTimeout(() => cartIcon.classList.remove("cart-shake"), 500);
+    }
+
+    if (goToCheckout) {
+        // Si eligió "Ir a Pagar", abrimos el checkout
+        openCheckout();
+    } else {
+        // Si eligió "Seguir Mirando", solo notificamos
+        toast(`Agregaste ${tempQty}x ${tempProduct.name}`, "success");
+    }
 }
 
 function renderCart() {
