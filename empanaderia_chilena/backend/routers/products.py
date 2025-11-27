@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from typing import List
-from database import products_collection
+from database import db, products_collection
 from models import Product
 from auth import get_admin # Solo importamos lo necesario
 
