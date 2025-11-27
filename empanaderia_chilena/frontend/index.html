@@ -96,7 +96,25 @@
         </div>
 
         <div id="view-sales" class="admin-view">
-            <div style="background:white; padding:20px; border-radius:16px; height:350px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin-bottom:30px;">
+                <div style="background:white; padding:20px; border-radius:12px; box-shadow:var(--shadow); border-left:5px solid var(--secondary);">
+                    <h4 style="color:#777;">Ventas Totales</h4>
+                    <h2 id="kpi-total" style="font-size:2rem; margin-top:5px;">$0</h2>
+                </div>
+                <div style="background:white; padding:20px; border-radius:12px; box-shadow:var(--shadow); border-left:5px solid var(--primary);">
+                    <h4 style="color:#777;">Pedidos Realizados</h4>
+                    <h2 id="kpi-count" style="font-size:2rem; margin-top:5px;">0</h2>
+                </div>
+                <div style="background:white; padding:20px; border-radius:12px; box-shadow:var(--shadow); border-left:5px solid var(--accent);">
+                    <h4 style="color:#777;">Ticket Promedio</h4>
+                    <h2 id="kpi-avg" style="font-size:2rem; margin-top:5px;">$0</h2>
+                </div>
+            </div>
+
+    <div style="background:white; padding:20px; border-radius:16px; box-shadow: var(--shadow); height:400px;">
+        <canvas id="salesChart"></canvas>
+    </div>
+</div>
                 <canvas id="salesChart"></canvas>
             </div>
         </div>
@@ -186,6 +204,22 @@
 
     <div id="toast-box" class="toast-container"></div>
 
+<div id="stock-modal" class="modal hidden" style="display:none;">
+    <div class="modal-box">
+        <span class="close" onclick="closeModal('stock-modal')">×</span>
+        <h3 style="margin-bottom:15px;">Gestionar Inventario</h3>
+        <p id="stock-prod-name" style="margin-bottom:20px; color:#666;">Producto...</p>
+        
+        <label style="font-weight:bold; font-size:0.9rem;">Cantidad a agregar:</label>
+        <div style="display:flex; gap:10px; margin-top:5px; margin-bottom:20px;">
+            <input type="number" id="new-stock-qty" class="input-field" value="10" min="1" style="margin:0;">
+        </div>
+        
+        <button class="btn-primary" onclick="confirmStockUpdate()">Confirmar Ingreso</button>
+    </div>
+</div>
+
     <script src="app.js"></script>
+
 </body>
 </html>

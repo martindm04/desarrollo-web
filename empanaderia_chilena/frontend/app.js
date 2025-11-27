@@ -307,17 +307,92 @@ function toggleAdminPanel() {
     }
 }
 
+let salesChartInstance = null;
+
 function switchTab(tabName) {
-    // Ocultar todas las vistas
+    // Gestión de clases CSS
     document.getElementById("view-products").classList.remove("active");
     document.getElementById("view-sales").classList.remove("active");
     
-    // Mostrar la seleccionada
+    // Gestión visual de los botones (opcional, para que se ilumine el activo)
+    const tabs = document.querySelectorAll(".tab-btn");
+    tabs.forEach(t => t.classList.remove("active"));
+    
     if (tabName === 'products') {
         document.getElementById("view-products").classList.add("active");
+        tabs[0].classList.add("active");
     } else if (tabName === 'sales') {
         document.getElementById("view-sales").classList.add("active");
-        // Aquí podrías cargar gráficos si quisieras en el futuro
+        tabs[1].classList.add("active");
+        loadSalesMetrics(); // <--- CARGAR DATOS AL CLICKEAR
+    }
+}
+
+async function loadSalesMetrics() {
+    try {
+        // 1. Obtener todas las órdenes
+        const orders = await api("/orders");
+        
+        // 2. Calcular KPIs
+        const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+        const totalOrders = orders.length;
+        const avgTicket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+        document.getElementById("kpi-total").innerText = `$${totalRevenue.toLocaleString('es-CL')}`;
+        document.getElementById("kpi-count").innerText = totalOrders;
+        document.getElementById("kpi-avg").innerText = `$${avgTicket.toLocaleString('es-CL')}`;
+
+        // 3. Preparar datos para el Gráfico (Agrupar ventas por producto)
+        // Creamos un diccionario: { "Empanada Pino": 50, "Bebida": 20 ... }
+        const productSales = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (productSales[item.name]) {
+                    productSales[item.name] += item.quantity;
+                } else {
+                    productSales[item.name] = item.quantity;
+                }
+            });
+        });
+
+        // Separar etiquetas (nombres) y datos (cantidades)
+        const labels = Object.keys(productSales);
+        const data = Object.values(productSales);
+
+        // 4. Renderizar Chart.js
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Si ya existe un gráfico previo, destruirlo para no sobreponer
+        if (salesChartInstance) salesChartInstance.destroy();
+
+        salesChartInstance = new Chart(ctx, {
+            type: 'bar', // Tipo de gráfico: barras
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Unidades Vendidas',
+                    data: data,
+                    backgroundColor: 'rgba(211, 47, 47, 0.7)', // Color rojo corporativo
+                    borderColor: 'rgba(211, 47, 47, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Productos Más Vendidos' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+    } catch (e) {
+        console.error(e);
+        toast("Error cargando métricas", "error");
     }
 }
 
@@ -380,14 +455,36 @@ function clearForm() {
     document.getElementById("adm-img").value = "";
 }
 
-async function addStock(id) {
-    const qty = prompt("Cantidad a agregar al inventario:");
-    if (!qty) return;
+// Variable temporal para saber qué producto estamos editando
+let currentEditingProductId = null;
+
+// Paso 1: Abrir el modal bonito
+function addStock(id) {
+    const p = state.products.find(x => x.id === id);
+    if (!p) return;
+
+    currentEditingProductId = id;
     
+    // Llenar datos en el modal
+    document.getElementById("stock-prod-name").innerText = `Agregando stock a: ${p.name}`;
+    document.getElementById("new-stock-qty").value = 10; // Valor por defecto
+    document.getElementById("new-stock-qty").focus();
+    
+    openModal("stock-modal");
+}
+
+// Paso 2: Confirmar la acción
+async function confirmStockUpdate() {
+    const qtyInput = document.getElementById("new-stock-qty");
+    const qty = parseInt(qtyInput.value);
+
+    if (!qty || qty <= 0) return toast("Ingresa una cantidad válida", "error");
+
     try {
-        await api(`/admin/stock/${id}`, "POST", { quantity: parseInt(qty) });
-        toast("Stock actualizado", "success");
-        loadAdminTable(); // Recargar tabla
+        await api(`/admin/stock/${currentEditingProductId}`, "POST", { quantity: qty });
+        toast("Inventario actualizado correctamente", "success");
+        closeModal("stock-modal");
+        loadAdminTable(); // Refrescar la tabla de fondo
     } catch (e) {
         toast("Error al actualizar stock", "error");
     }
