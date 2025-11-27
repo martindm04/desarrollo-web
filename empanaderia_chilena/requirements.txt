@@ -7,3 +7,4 @@ pyjwt
 requests
 pytest
 httpx
+python-dotenv

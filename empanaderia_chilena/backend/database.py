@@ -1,11 +1,17 @@
+import os
 from pymongo import MongoClient
+from dotenv import load_dotenv
 
-# Conexión a MongoDB local (asegúrate de tener MongoDB corriendo)
-client = MongoClient("mongodb://localhost:27017/")
+# Cargar variables de entorno
+load_dotenv()
 
-# Nombre de la base de datos
-db = client.empanaderia_db
+# Obtener URI desde .env (o usar localhost por defecto si falla)
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+DB_NAME = os.getenv("DB_NAME", "empanaderia_db")
 
-# Colecciones (Equivalente a tablas)
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+
 products_collection = db["products"]
 users_collection = db["users"]
+orders_collection = db["orders"] # Aseguramos que esta referencia exista explícitamente

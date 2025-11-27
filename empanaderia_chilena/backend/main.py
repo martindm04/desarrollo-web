@@ -11,6 +11,12 @@ import jwt
 from database import products_collection, db
 from models import Product, Order, User, LoginRequest
 
+import os
+from dotenv import load_dotenv
+
+# Cargar variables al inicio
+load_dotenv()
+
 # --- LOGGING ESTRUCTURADO (Seguridad) ---
 class JsonFormatter(logging.Formatter):
     def format(self, record):
@@ -28,9 +34,12 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 # --- SEGURIDAD ---
-SECRET_KEY = "secreto_produccion_taller_2025"  # En un caso real, usa variables de entorno
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+
+if not SECRET_KEY:
+    raise ValueError("❌ ERROR CRÍTICO: No se encontró SECRET_KEY en el archivo .env")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
