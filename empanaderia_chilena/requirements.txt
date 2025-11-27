@@ -10,3 +10,4 @@ httpx
 python-dotenv
 aiofiles
 slowapi
+pytest
