@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-# Modelo flexible para Login (Email o Usuario)
+# Modelo para Login Híbrido (Req 2)
 class LoginRequest(BaseModel):
-    identifier: str
+    identifier: str # Puede ser email o nombre de usuario
     password: str
 
 class Product(BaseModel):
