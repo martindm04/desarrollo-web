@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -9,12 +9,23 @@ from dotenv import load_dotenv
 from routers import users, products, orders
 from database import products_collection
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 # Configuración Base
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api")
 
+# Configuración de Rate Limiting (Por IP)
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title="Empanadería API", version="2.0.0")
+
+# Conectar el limitador a FastAPI
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- MIDDLEWARE (CORS) ---
 app.add_middleware(

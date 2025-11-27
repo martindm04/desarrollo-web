@@ -27,11 +27,19 @@ async function api(endpoint, method="GET", body=null) {
         const res = await fetch(`${API}${endpoint}`, {
             method, headers, body: body ? JSON.stringify(body) : null
         });
-        
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Error en la petición");
+
+        if (!res.ok) {
+            // Manejo especial para Rate Limiting
+            if (res.status === 429) {
+                // El mensaje suele venir en data.error o data.detail
+                throw new Error("⛔ Demasiados intentos. Por favor espera 1 minuto.");
+            }
+            throw new Error(data.detail || "Error en la petición");
+        }
         return data;
-    } catch (e) {
+} catch (e) {
         throw e;
     }
 }

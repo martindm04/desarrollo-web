@@ -1,7 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from database import db
 from models import User, LoginRequest
 from auth import get_password_hash, verify_password, create_token
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(tags=["Usuarios"])
 
@@ -22,7 +27,8 @@ def register(user: User):
     return {"message": "Cuenta creada exitosamente"}
 
 @router.post("/login")
-def login(creds: LoginRequest):
+@limiter.limit("5/minute")
+def login(request: Request, creds: LoginRequest):
     user = db.users.find_one({
         "$or": [{"email": creds.identifier}, {"name": creds.identifier}]
     })
