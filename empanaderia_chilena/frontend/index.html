@@ -206,17 +206,64 @@
         </div>
     </div>
 
-    <div id="checkout-modal" class="modal hidden" style="display:none;">
-        <div class="modal-box">
-            <span class="close" onclick="closeModal('checkout-modal')">×</span>
-            <h2 style="text-align:center;">Confirmar Compra</h2>
-            <div style="background:#F7FAFC; padding:15px; border-radius:12px; margin:20px 0;">
-                <p>Total a Pagar: <strong id="chk-total" style="color:var(--chile-red, #D32F2F); font-size:1.2rem;"></strong></p>
-                <p>Cliente: <span id="chk-email"></span></p>
+<div id="checkout-modal" class="modal hidden" style="display:none;">
+    <div class="modal-box" style="max-width: 800px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 0;">
+        
+        <div style="padding: 30px; background: #f8f9fa; border-radius: 16px 0 0 16px;">
+            <h3 style="margin-bottom: 20px;">Resumen del Pedido</h3>
+            <div style="margin-bottom: 15px; font-size: 0.9rem; color: #666;">
+                Cliente: <br>
+                <strong id="chk-email" style="color: #333;">usuario@ejemplo.com</strong>
             </div>
-            <button class="btn-primary" onclick="processPayment()">✅ Confirmar y Pagar</button>
+            <div style="margin-bottom: 20px; font-size: 0.9rem; color: #666;">
+                Total a Pagar: <br>
+                <strong id="chk-total" style="font-size: 2rem; color: var(--primary);"> $0</strong>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="font-size: 0.8rem; color: #999;">
+                <span style="display:block; margin-bottom:5px;">🔒 Pago Seguro SSL</span>
+                Al confirmar, aceptas nuestros términos y condiciones de servicio.
+            </p>
+        </div>
+
+        <div style="padding: 30px; position: relative;">
+            <span class="close" onclick="closeModal('checkout-modal')" style="top: 15px; right: 20px;">×</span>
+            <h3 style="margin-bottom: 20px;">Datos de Pago</h3>
+            
+            <div class="credit-card-visual">
+                <div id="card-logo">💳</div>
+                <div id="card-number-display">•••• •••• •••• ••••</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                    <div id="card-name-display">NOMBRE TITULAR</div>
+                    <div id="card-exp-display">MM/YY</div>
+                </div>
+            </div>
+
+            <form onsubmit="event.preventDefault(); processPayment();">
+                <label style="font-size: 0.8rem; font-weight: bold; color: #555;">Número de Tarjeta</label>
+                <input type="text" id="cc-number" class="input-field" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this)">
+                
+                <label style="font-size: 0.8rem; font-weight: bold; color: #555;">Titular</label>
+                <input type="text" id="cc-name" class="input-field" placeholder="Como aparece en la tarjeta" oninput="updateCardVisual(this, 'name')">
+                
+                <div style="display: flex; gap: 15px;">
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: #555;">Expira</label>
+                        <input type="text" id="cc-exp" class="input-field" placeholder="MM/YY" maxlength="5" oninput="formatDate(this)">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: bold; color: #555;">CVV</label>
+                        <input type="password" id="cc-cvv" class="input-field" placeholder="123" maxlength="3">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-pay" class="btn-primary" style="width: 100%; margin-top: 15px;">
+                    Pagar Ahora
+                </button>
+            </form>
         </div>
     </div>
+</div>
 
     <div id="toast-box" class="toast-container"></div>
 

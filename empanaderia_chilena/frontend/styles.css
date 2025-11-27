@@ -318,3 +318,39 @@ nav {
 .sk-title { height: 24px; width: 70%; }
 .sk-price { height: 20px; width: 40%; }
 .sk-btn { height: 40px; width: 100%; margin-top: auto; border-radius: 8px; }
+
+
+/* --- NOTIFICACIONES (TOAST) --- */
+.toast-container {
+    position: fixed; /* Fijo en la pantalla, no al final del scroll */
+    bottom: 20px;    /* 20px desde abajo */
+    right: 20px;     /* 20px desde la derecha */
+    z-index: 5000;   /* Por encima de todo, incluso de los modales */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;       /* Espacio entre notificaciones si hay varias */
+}
+
+/* Animación de entrada suave */
+.toast-container > div {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* --- ANIMACIÓN CARRITO (Feedback visual) --- */
+@keyframes shake {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg); }
+    50% { transform: rotate(0eg); }
+    75% { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.cart-shake {
+    animation: shake 0.4s ease-in-out;
+    color: var(--primary) !important; /* Se pone rojo al agregar */
+}
