@@ -67,23 +67,54 @@ function renderGrid() {
 
 function renderCarousel() {
     const track = document.getElementById("carousel-track");
+    
+    // 1. Filtrar productos con imagen
+    const featured = state.products.filter(p => p.image.startsWith('http') && p.stock > 0).slice(0, 5);
+    
+    // 2. CORRECCIÓN: Usar el ID correcto del HTML ('hero-carousel')
+    const carouselContainer = document.getElementById("hero-carousel");
+    
+    if(featured.length === 0) {
+        if(carouselContainer) carouselContainer.style.display = 'none'; // Ocultar si no hay productos
+        return;
+    } else {
+        if(carouselContainer) carouselContainer.style.display = 'block'; // Mostrar si hay
+    }
+
     track.innerHTML = "";
-    const featured = state.products.slice(0, 3);
     
     featured.forEach(p => {
         const slide = document.createElement("div");
         slide.className = "carousel-slide";
-        slide.style.backgroundColor = "#f0f9ff";
+        // Fondo sutil según categoría
+        const bgColor = p.category === 'horno' ? '#FFF5F5' : '#F0F9FF';
+        slide.style.backgroundColor = bgColor;
+        
         slide.innerHTML = `
-            <div style="width:50%;">
-                <h1 style="color:var(--primary); font-size:3rem;">${p.name}</h1>
-                <p>La mejor calidad artesanal.</p>
-                <button class="btn-primary" onclick="addToCart(${p.id})">Comprar Ahora</button>
+            <div class="carousel-content">
+                <h2>${p.name}</h2>
+                <p>Sabor auténtico artesanal.</p>
+                <button class="btn-primary" style="width:auto; padding:12px 30px;" onclick="openQtyModal(${p.id})">
+                    Comprar $${p.price.toLocaleString('es-CL')}
+                </button>
             </div>
-            <img src="${p.image}" class="carousel-img" style="height:80%;">
+            <img src="${p.image}" class="carousel-img">
         `;
         track.appendChild(slide);
     });
+    
+    startCarousel(); // Iniciar animación
+}
+function startCarousel() {
+    const track = document.getElementById("carousel-track");
+    let index = 0;
+    const slides = track.children;
+    const total = slides.length;
+    setInterval(() => {
+        slides[index].style.opacity = 0;
+        index = (index + 1) % total;
+        slides[index].style.opacity = 1;
+    }, 4000);
 }
 
 // --- CART ---
