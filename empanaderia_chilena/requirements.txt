@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pymongo
+pydantic
+passlib[bcrypt]
+pyjwt
+requests
+pytest
+httpx
