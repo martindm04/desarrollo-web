@@ -119,3 +119,37 @@ nav {
 /* UTILS */
 .hidden { display: none !important; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- CORRECCIONES FINALES --- */
+
+/* Botones pequeños para el carrito lateral */
+.qty-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    border: 1px solid #ddd;
+    margin: 0 5px;
+}
+
+/* Asegurar que las pestañas del admin se vean en fila */
+.admin-header {
+    display: flex;
+    gap: 15px;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+/* Estilo para la clase active de los contenidos Admin */
+.admin-content { display: none; }
+.admin-content.active { display: block; animation: fadeIn 0.3s; }
+
+/* Ajuste del botón Registrarse en el header */
+.btn-primary {
+    display: inline-block;
+    text-align: center;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
