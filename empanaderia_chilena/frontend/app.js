@@ -247,6 +247,164 @@ async function processPayment() {
     } catch(e) { toast(e.message, "error"); }
 }
 
+// --- HISTORIAL DE PEDIDOS ---
+async function openOrderHistory() {
+    if (!state.user) return toast("Debes iniciar sesión para ver tus pedidos", "error");
+
+    try {
+        // Pedimos los pedidos al backend
+        const orders = await api(`/orders/user/${state.user.email}`);
+        
+        const tbody = document.getElementById("history-body");
+        const noHistory = document.getElementById("no-history");
+        
+        if (tbody) tbody.innerHTML = ""; // Limpiar tabla anterior
+
+        if (orders.length === 0) {
+            if (noHistory) noHistory.classList.remove("hidden");
+        } else {
+            if (noHistory) noHistory.classList.add("hidden");
+            
+            // Dibujar cada pedido en la tabla
+            orders.forEach(o => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="padding:10px; font-weight:bold;">#${o.id.slice(-6)}</td>
+                    <td>$${o.total.toLocaleString('es-CL')}</td>
+                    <td><span class="badge" style="background:#48bb78; position:static;">${o.status}</span></td>
+                    <td style="font-size:0.9rem;">
+                        ${o.items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        openModal("history-modal");
+    } catch (e) {
+        console.error(e);
+        toast("Error al cargar el historial", "error");
+    }
+}
+
+// --- PANEL DE ADMINISTRACIÓN ---
+function toggleAdminPanel() {
+    const adminPanel = document.getElementById("admin-panel");
+    const mainApp = document.getElementById("main-app");
+    
+    if (!adminPanel || !mainApp) return;
+
+    if (adminPanel.classList.contains("hidden")) {
+        // MOSTRAR PANEL
+        adminPanel.classList.remove("hidden");
+        adminPanel.style.display = "block"; // Asegurar visibilidad
+        mainApp.classList.add("hidden");    // Ocultar tienda normal
+        loadAdminTable();                   // Cargar datos
+    } else {
+        // OCULTAR PANEL
+        adminPanel.classList.add("hidden");
+        adminPanel.style.display = "none";
+        mainApp.classList.remove("hidden");
+    }
+}
+
+function switchTab(tabName) {
+    // Ocultar todas las vistas
+    document.getElementById("view-products").classList.remove("active");
+    document.getElementById("view-sales").classList.remove("active");
+    
+    // Mostrar la seleccionada
+    if (tabName === 'products') {
+        document.getElementById("view-products").classList.add("active");
+    } else if (tabName === 'sales') {
+        document.getElementById("view-sales").classList.add("active");
+        // Aquí podrías cargar gráficos si quisieras en el futuro
+    }
+}
+
+async function loadAdminTable() {
+    const tbody = document.getElementById("adm-table");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>";
+    
+    await loadProducts(); // Refrescar datos del servidor
+    tbody.innerHTML = ""; // Limpiar mensaje de carga
+
+    state.products.forEach(p => {
+        tbody.innerHTML += `
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:10px;">${p.id}</td>
+                <td style="display:flex; align-items:center; gap:10px;">
+                    <img src="${p.image}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                    ${p.name}
+                </td>
+                <td>$${p.price.toLocaleString('es-CL')}</td>
+                <td style="font-weight:bold; color:${p.stock < 10 ? 'red' : 'green'}">${p.stock}</td>
+                <td>
+                    <button class="btn-primary" style="padding:5px 10px; font-size:0.8rem;" onclick="addStock(${p.id})">+ Stock</button>
+                    <button class="btn-secondary" style="padding:5px 10px; font-size:0.8rem; background:#e53e3e; color:white;" onclick="deleteProduct(${p.id})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Funciones del formulario de Admin
+async function saveProduct() {
+    const id = parseInt(document.getElementById("adm-id").value);
+    const name = document.getElementById("adm-name").value;
+    const cat = document.getElementById("adm-cat").value;
+    const price = parseInt(document.getElementById("adm-price").value);
+    const stock = parseInt(document.getElementById("adm-stock").value);
+    const img = document.getElementById("adm-img").value;
+
+    if (!id || !name || !price) return toast("Faltan datos obligatorios", "error");
+
+    const product = { id, name, category: cat, price, stock, image: img || "https://via.placeholder.com/150" };
+
+    try {
+        await api("/products", "POST", product);
+        toast("Producto creado correctamente", "success");
+        clearForm();
+        loadAdminTable();
+    } catch (e) {
+        toast(e.message || "Error al crear producto (¿ID repetido?)", "error");
+    }
+}
+
+function clearForm() {
+    document.getElementById("adm-id").value = "";
+    document.getElementById("adm-name").value = "";
+    document.getElementById("adm-price").value = "";
+    document.getElementById("adm-stock").value = "";
+    document.getElementById("adm-img").value = "";
+}
+
+async function addStock(id) {
+    const qty = prompt("Cantidad a agregar al inventario:");
+    if (!qty) return;
+    
+    try {
+        await api(`/admin/stock/${id}`, "POST", { quantity: parseInt(qty) });
+        toast("Stock actualizado", "success");
+        loadAdminTable(); // Recargar tabla
+    } catch (e) {
+        toast("Error al actualizar stock", "error");
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+    
+    try {
+        await api(`/products/${id}`, "DELETE");
+        toast("Producto eliminado", "success");
+        loadAdminTable();
+    } catch (e) {
+        toast("Error al eliminar", "error");
+    }
+}
+
 // --- AUTH (LOGIN & REGISTER) ---
 async function login() {
     const u = document.getElementById("login-user").value;
