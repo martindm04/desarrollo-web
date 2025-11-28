@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Body
 from typing import List
 from database import products_collection
 from models import Product
 from auth import get_admin
 import shutil
 import uuid
+import os
 
 router = APIRouter(tags=["Productos"])
 
@@ -26,7 +27,11 @@ def upload_image(file: UploadFile = File(...)):
 
         file_ext = file.filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_ext}"
-        save_path = f"static/images/{unique_filename}"
+
+        save_dir = "static/images"
+        os.makedirs(save_dir, exist_ok=True)
+
+        save_path = f"{save_dir}/{unique_filename}"
 
         with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -51,7 +56,7 @@ def update_product(pid: int, product_update: Product):
 
     if result.matched_count == 0:
         raise HTTPException(404, "Producto no encontrado")
-    return {"message": "Producto actualizado"}
+    return {"message": "Producto actualizado correctamente"}
 
 @router.delete("/products/{pid}", dependencies=[Depends(get_admin)])
 def del_prod(pid: int):
@@ -60,8 +65,10 @@ def del_prod(pid: int):
     return {"message": "Eliminado"}
 
 @router.post("/admin/stock/{pid}", dependencies=[Depends(get_admin)])
-def add_stock(pid: int, quantity: dict):
+def add_stock(pid: int, quantity: dict = Body(...)):
     qty = quantity.get("quantity")
+    if not qty: raise HTTPException(400, "Falta quantity")
+
     res = products_collection.update_one({"id": pid}, {"$inc": {"stock": qty}})
     if res.matched_count == 0: raise HTTPException(404, "Producto no encontrado")
     return {"message": "Stock actualizado"}
