@@ -662,11 +662,34 @@ async function saveProduct() {
 }
 
 function clearForm() {
+    // Limpiar campos de texto normales
     document.getElementById("adm-id").value = "";
     document.getElementById("adm-name").value = "";
     document.getElementById("adm-price").value = "";
     document.getElementById("adm-stock").value = "";
-    document.getElementById("adm-img").value = "";
+    
+    // CORRECCIÓN: Limpiar los nuevos campos de imagen
+    // 1. Limpiar el input oculto (la URL)
+    const urlInput = document.getElementById("adm-img-url");
+    if (urlInput) urlInput.value = "";
+    
+    // 2. Limpiar el input de archivo (para que el evento onchange dispare de nuevo si subes el mismo)
+    const fileInput = document.getElementById("adm-file");
+    if (fileInput) fileInput.value = ""; 
+
+    // 3. Ocultar la previsualización
+    const preview = document.getElementById("preview-img");
+    if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
+    }
+
+    // 4. Restaurar el texto del label "Subir Imagen"
+    const label = document.querySelector("label[for='adm-file']");
+    if (label) {
+        label.innerText = "📂 Subir Imagen";
+        label.style.background = "";
+    }
 }
 
 // Variable temporal para saber qué producto estamos editando
