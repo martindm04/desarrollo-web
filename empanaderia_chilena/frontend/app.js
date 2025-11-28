@@ -60,7 +60,7 @@ async function loadProducts() {
     try {
         state.products = await api("/products");
         renderHome();
-        renderCarousel();
+        initCarousel();
     } catch (e) { 
         console.error(e);
         toast("Error conectando con el servidor.", "error"); 
@@ -191,46 +191,79 @@ function renderGrid(categoryFilter = 'all') {
     });
 }
 
-function renderCarousel() {
+let carouselInterval;
+let currentSlide = 1;
+
+function initCarousel() {
     const track = document.getElementById("carousel-track");
     const container = document.getElementById("hero-carousel");
-    
-    const featured = state.products.filter(p => p.stock > 0).slice(0, 5);
-    
-    if(featured.length === 0) {
-        if(container) container.style.display = 'none';
-        return;
-    }
-    if(container) container.style.display = 'block';
 
-    track.innerHTML = "";
+    const featured = state.products.filter(p => p.stock > 0 && p.image).slice(0, 5);
     
-    featured.forEach((p, index) => {
-        let imgUrl = p.image;
-        if (!imgUrl.startsWith('http')) {
-            imgUrl = imgUrl.startsWith('/') ? `${API}${imgUrl}` : `${API}/static/images/${imgUrl}`;
+    if (featured.length === 0 || !track) return;
+    container.classList.remove("hidden");
+
+    const slidesHTML = featured.map(p => buildSlideHTML(p)).join('');
+    const firstClone = buildSlideHTML(featured[0]);
+    const lastClone = buildSlideHTML(featured[featured.length - 1]);
+
+    track.innerHTML = lastClone + slidesHTML + firstClone;
+
+    track.style.transform = `translateX(-100%)`;
+
+    // Dots
+    const dotsContainer = document.getElementById("carousel-dots");
+    dotsContainer.innerHTML = featured.map((_, i) => 
+        `<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`
+    ).join('');
+
+    startCarouselLoop(featured.length);
+}
+
+function buildSlideHTML(p) {
+    let img = p.image.startsWith('http') ? p.image : `${API}${p.image}`;
+    return `
+        <div class="carousel-slide" style="background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);">
+            <div class="slide-content">
+                <span class="badge ${p.category}" style="position:static; margin-bottom:10px; display:inline-block;">${p.category}</span>
+                <h2>${p.name}</h2>
+                <h3 style="color:#555; margin-bottom:20px;">$${p.price.toLocaleString('es-CL')}</h3>
+                <button class="btn-primary" onclick="addToCart(${p.id})" style="width:auto; padding:10px 30px;">¡Lo quiero!</button>
+            </div>
+            <img src="${img}" class="slide-img" style="max-height:200px; object-fit:contain;">
+        </div>
+    `;
+}
+
+function startCarouselLoop(totalRealSlides) {
+    const track = document.getElementById("carousel-track");
+    if(carouselInterval) clearInterval(carouselInterval);
+
+    carouselInterval = setInterval(() => {
+        currentSlide++;
+        track.style.transition = "transform 0.5s ease-in-out";
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+        if (currentSlide === totalRealSlides + 1) {
+            setTimeout(() => {
+                track.style.transition = "none";
+                currentSlide = 1;
+                track.style.transform = `translateX(-100%)`;
+            }, 500);
         }
 
-        const slide = document.createElement("div");
-        slide.className = "carousel-slide";
-        slide.style.background = index % 2 === 0 ? "linear-gradient(to right, #FFF5F5, #fff)" : "linear-gradient(to right, #F0F9FF, #fff)";
-        
-        slide.innerHTML = `
-            <div class="carousel-content">
-                <h2>${p.name}</h2>
-                <p>Sabor artesanal chileno.</p>
-                <button class="btn-primary" onclick="addToCart(${p.id})">
-                    Comprar ahora $${p.price.toLocaleString('es-CL')}
-                </button>
-            </div>
-            <img src="${imgUrl}" class="carousel-img" onerror="this.style.display='none'">
-        `;
-        track.appendChild(slide);
-    });
+        updateDots(currentSlide, totalRealSlides);
+    }, 4000);
+}
 
-    currentSlide = 0;
-    updateCarousel();
-    startAutoSlide();
+function updateDots(idx, total) {
+    let visualIndex = idx - 1;
+    if (visualIndex < 0) visualIndex = total - 1;
+    if (visualIndex >= total) visualIndex = 0;
+
+    document.querySelectorAll(".dot").forEach(d => d.classList.remove("active"));
+    const activeDot = document.getElementById(`dot-${visualIndex}`);
+    if(activeDot) activeDot.classList.add("active");
 }
 
 function moveSlide(direction) {
@@ -242,21 +275,6 @@ function moveSlide(direction) {
     if (currentSlide >= totalSlides) currentSlide = 0;
     updateCarousel();
     resetAutoSlide();
-}
-
-function updateCarousel() {
-    const track = document.getElementById("carousel-track");
-    if(track) track.style.transform = `translateX(-${currentSlide * 100}%)`;
-}
-
-function startAutoSlide() {
-    clearInterval(carouselInterval);
-    carouselInterval = setInterval(() => moveSlide(1), 5000);
-}
-
-function resetAutoSlide() {
-    clearInterval(carouselInterval);
-    startAutoSlide();
 }
 
 let tempQty = 1;
@@ -450,20 +468,31 @@ async function openOrderHistory() {
 }
 
 function toggleAdminPanel() {
-    const adminPanel = document.getElementById("admin-panel");
-    const mainApp = document.getElementById("main-app");
-    
-    if (!adminPanel) return;
+    const admin = document.getElementById("admin-panel");
+    const mainApp = document.querySelector(".main-wrapper");
+    const header = document.querySelector("header");
+    const bottomNav = document.querySelector(".bottom-nav");
 
-    if (adminPanel.classList.contains("hidden")) {
-        adminPanel.classList.remove("hidden");
-        adminPanel.style.display = "block";
-        if(mainApp) mainApp.classList.add("hidden");
-        loadAdminTable();
+    const isOpen = admin.classList.contains("open");
+
+    if (isOpen) {
+        admin.classList.remove("open");
+        setTimeout(() => admin.classList.add("hidden"), 300);
+        
+        mainApp.classList.remove("hidden");
+        if(header) header.classList.remove("hidden");
+        if(bottomNav) bottomNav.classList.remove("hidden");
+
     } else {
-        adminPanel.classList.add("hidden");
-        adminPanel.style.display = "none";
-        if(mainApp) mainApp.classList.remove("hidden");
+        admin.classList.remove("hidden");
+
+        setTimeout(() => admin.classList.add("open"), 10);
+        
+        mainApp.classList.add("hidden");
+        if(header) header.classList.add("hidden");
+        if(bottomNav) bottomNav.classList.add("hidden");
+
+        loadAdminTable();
     }
 }
 
@@ -485,6 +514,7 @@ function switchTab(tabName) {
 }
 
 async function loadSalesMetrics() {
+    if (!state.user || state.user.role !== 'admin') return;
     try {
         const orders = await api("/orders");
         
@@ -864,4 +894,41 @@ function loadCartFromStorage() {
     const c = JSON.parse(localStorage.getItem("dw_cart")); 
     if(c) { state.cart=c; } 
 }
+
+async function loadAdminTable() {
+    const tbody = document.getElementById("adm-table");
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+
+    try {
+
+        if (state.products.length === 0) {
+            state.products = await api("/products");
+        }
+
+        tbody.innerHTML = "";
+        state.products.forEach(p => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${p.image.startsWith('http') ? p.image : API + p.image}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                        ${p.name}
+                    </div>
+                </td>
+                <td>$${p.price.toLocaleString('es-CL')}</td>
+                <td>${p.stock}</td>
+                <td>
+                    <button onclick="editProduct(${p.id})" style="cursor:pointer; margin-right:5px;">✏️</button>
+                    <button onclick="deleteProduct(${p.id})" style="cursor:pointer; color:red;">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:red; text-align:center;">Error cargando datos</td></tr>';
+    }
+}
+
 loadCartFromStorage();

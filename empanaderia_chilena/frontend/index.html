@@ -37,7 +37,13 @@
             <input type="text" id="search" placeholder="¿Qué se te antoja hoy? 🥟" autocomplete="off">
             <span class="search-icon">🔍</span>
         </div>
+<div id="hero-carousel" class="hidden">
+    <div class="carousel-track" id="carousel-track">
+        </div>
+    <div class="carousel-dots" id="carousel-dots"></div>
+</div>
 
+<div id="home-view">
         <div id="home-view">
             </div>
 
@@ -58,6 +64,12 @@
 
     </div>
     <section id="admin-panel" class="admin-container hidden">
+    <div class="admin-navbar">
+        <h2 style="color:var(--primary);">⚙️ Panel de Control</h2>
+        <button onclick="toggleAdminPanel()" style="background:transparent; border:2px solid #ddd; padding:8px 15px; border-radius:20px; font-weight:bold; cursor:pointer;">
+            ✕ Cerrar y Volver
+        </button>
+    </div>
         <div style="margin-bottom:20px; border-bottom:2px solid #eee;">
             <button class="tab-btn active" onclick="switchTab('products')">📦 Inventario</button>
             <button class="tab-btn" onclick="switchTab('sales')">📊 Ventas y Métricas</button>
