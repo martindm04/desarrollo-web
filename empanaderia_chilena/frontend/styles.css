@@ -1,8 +1,8 @@
 :root {
-    --primary: #D32F2F;      /* Rojo Institucional */
+    --primary: #D32F2F;
     --primary-dark: #9A0007;
-    --secondary: #1976D2;    /* Azul Institucional */
-    --accent: #FBC02D;       /* Dorado Detalles */
+    --secondary: #1976D2;
+    --accent: #FBC02D;
     --bg-body: #F4F6F8;
     --text-main: #1A202C;
     --white: #ffffff;
@@ -16,12 +16,10 @@ body {
     background-color: var(--bg-body);
     color: var(--text-main);
     padding-bottom: 60px;
-    /* Patrón sutil */
     background-image: radial-gradient(#cbd5e0 1px, transparent 1px);
     background-size: 20px 20px;
 }
 
-/* HEADER PREMIUM */
 header {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -55,51 +53,43 @@ nav {
 }
 .btn-primary:hover { background: var(--primary-dark); }
 
-/* --- CARRUSELES RESPONSIVOS (VERSIÓN FINAL) --- */
-
-/* 1. Contenedor de la fila (El riel) */
 .shelf-container {
     display: flex;
-    flex-wrap: nowrap;        /* OBLIGATORIO: Nunca bajar a la siguiente línea */
-    overflow-x: auto;         /* Permitir deslizar hacia los lados */
-    gap: 15px;                /* Espacio entre tarjetas */
-    padding: 10px 15px 30px 15px; /* Espacio para la sombra inferior */
-    
-    /* Scroll suave nativo */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 15px 30px 15px;
+
     scroll-snap-type: x mandatory; 
     -webkit-overflow-scrolling: touch;
-    
-    /* Ocultar barra de scroll */
+
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .shelf-container::-webkit-scrollbar { display: none; }
 
-/* 2. La Tarjeta (El ladrillo rígido) */
 .shelf-container .card {
-    /* GEOMETRÍA RÍGIDA: Esto evita que se aplasten */
-    flex: 0 0 auto;           /* No crecer, NO ENCOGER, base auto */
-    width: 240px;             /* Ancho fijo ideal para PC */
-    min-width: 240px;         /* Seguro de vida: nunca menos de esto */
-    
-    /* Estructura interna vertical */
+
+    flex: 0 0 auto;
+    width: 240px;
+    min-width: 240px;
+
     display: flex;
     flex-direction: column;
-    height: 100%;             /* Altura completa del padre */
-    
+    height: 100%;
+
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    scroll-snap-align: start; /* Efecto magnético al soltar */
-    border: none;             /* Limpieza visual */
-    overflow: hidden;         /* Recortar bordes de imagen */
+    scroll-snap-align: start;
+    border: none;
+    overflow: hidden;
 }
 
-/* 3. La Imagen (Fija y recortada) */
 .shelf-container .card-img {
-    height: 140px;            /* Altura fija: fundamental para uniformidad */
+    height: 140px;
     width: 100%;
-    flex-shrink: 0;           /* Prohibido encoger la foto */
+    flex-shrink: 0;
     position: relative;
     border-bottom: 1px solid #f0f0f0;
 }
@@ -107,25 +97,24 @@ nav {
 .shelf-container .card-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover;        /* Recorte inteligente (zoom) */
+    object-fit: cover;
     display: block;
 }
 
-/* 4. Información (Texto y Botón) */
 .shelf-container .card-info {
     padding: 12px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1;             /* Llenar el espacio restante */
+    flex-grow: 1;
     justify-content: space-between;
 }
 
 .shelf-container h3 {
     font-size: 1rem;
     margin: 0 0 5px 0;
-    white-space: nowrap;      /* Texto en una línea */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;  /* "..." si es muy largo */
+    text-overflow: ellipsis;
 }
 
 .shelf-container .btn-primary {
@@ -135,29 +124,27 @@ nav {
     font-size: 0.9rem;
 }
 
-/* --- ADAPTACIÓN PARA CELULARES --- */
 @media (max-width: 768px) {
     .shelf-container .card {
-        width: 170px;         /* Más angosto para pantallas chicas */
-        min-width: 170px;     /* Forzar el ancho mínimo */
+        width: 170px;
+        min-width: 170px;
     }
     
     .shelf-container .card-img {
-        height: 110px;        /* Imagen un poco más baja */
+        height: 110px;
     }
     
     .shelf-container h3 {
-        font-size: 0.9rem;    /* Texto un poco más chico */
+        font-size: 0.9rem;
     }
 }
 
-/* --- ARREGLO DEL BOTÓN "VER MENÚ COMPLETO" --- */
 .btn-floating-all {
-    background: #2d3748;      /* Gris oscuro elegante */
+    background: #2d3748;
     color: white;
     border: none;
     padding: 12px 30px;
-    border-radius: 50px;      /* Redondo tipo píldora */
+    border-radius: 50px;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
@@ -170,7 +157,6 @@ nav {
     background: black;
     transform: scale(1.05);
 }
-/* Flechas de navegación */
 .c-arrow {
     position: absolute;
     top: 50%;
@@ -195,12 +181,6 @@ nav {
 .prev { left: 20px; }
 .next { right: 20px; }
 
-/* --- ESTILO TIPO NETFLIX (RESPONSIVO REAL) --- */
-/* =========================================
-   APP MOBILE EXPERIENCE (Rediseño Premium)
-   ========================================= */
-
-/* --- TÍTULOS DE SECCIÓN --- */
 .category-header {
     display: flex;
     justify-content: space-between;
@@ -211,7 +191,7 @@ nav {
 }
 
 .category-title {
-    font-size: 1.2rem; /* Tamaño más nativo */
+    font-size: 1.2rem;
     color: #1a202c;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -221,59 +201,52 @@ nav {
     font-size: 0.8rem;
     color: var(--primary);
     font-weight: 600;
-    background: rgba(211, 47, 47, 0.08); /* Fondo sutil */
+    background: rgba(211, 47, 47, 0.08);
     padding: 6px 12px;
     border-radius: 20px;
     transition: all 0.2s;
 }
 
-/* --- CONTENEDOR DEL CARRUSEL (RIEL HORIZONTAL) --- */
+
 .shelf-container {
-    display: flex !important;       /* !important para forzar fila */
-    flex-direction: row !important; /* Asegurar dirección horizontal */
-    flex-wrap: nowrap !important;   /* PROHIBIDO bajar de línea */
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     overflow-x: auto;
-    gap: 16px;                      /* Espacio moderno */
-    padding: 5px 20px 30px 20px;    /* Espacio para sombras */
-    
-    /* Física de scroll nativa iOS/Android */
+    gap: 16px;
+    padding: 5px 20px 30px 20px;
+
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    
-    /* Ocultar scrollbars */
+
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .shelf-container::-webkit-scrollbar { display: none; }
 
-/* --- TARJETA DE PRODUCTO (APP STYLE) --- */
 .shelf-container .card {
-    /* Geometría Rígida */
     flex: 0 0 auto; 
     width: 200px;
     height: 280px;
-    
-    /* Estilo "Card" Moderno */
+
     background: #ffffff;
-    border-radius: 20px; /* ¡Redondeado fuerte! */
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06); /* Sombra difusa y elegante */
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
     border: 1px solid rgba(0,0,0,0.02);
-    
-    /* Comportamiento */
+
     scroll-snap-align: start;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Para que la imagen respete el redondeado */
+    overflow: hidden;
     transition: transform 0.2s;
 }
 
 .shelf-container .card:active {
-    transform: scale(0.98); /* Efecto de "toque" al pulsar */
+    transform: scale(0.98);
 }
 
-/* --- IMAGEN DEL PRODUCTO --- */
 .shelf-container .card-img {
-    height: 150px; /* Imagen protagonista */
+    height: 150px;
     width: 100%;
     position: relative;
     background: #f8f9fa;
@@ -285,9 +258,8 @@ nav {
     object-fit: cover;
 }
 
-/* Badge (Etiqueta) Flotante */
 .shelf-container .badge {
-    top: 12px; left: 12px; right: auto; /* Mover a la izquierda */
+    top: 12px; left: 12px; right: auto;
     padding: 4px 10px;
     font-size: 0.65rem;
     border-radius: 8px;
@@ -295,7 +267,6 @@ nav {
     backdrop-filter: blur(4px);
 }
 
-/* --- INFORMACIÓN Y ACCIONES --- */
 .shelf-container .card-info {
     padding: 12px;
     flex: 1;
@@ -309,10 +280,10 @@ nav {
     margin: 0;
     font-weight: 600;
     color: #2d3748;
-    
-    /* Truncar texto elegante */
+
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Máximo 2 líneas */
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.3;
@@ -331,7 +302,6 @@ nav {
     color: #1a202c;
 }
 
-/* Botón "Agregar" Minimalista (Círculo con +) */
 .btn-add-mini {
     width: 32px;
     height: 32px;
@@ -350,17 +320,15 @@ nav {
 .btn-add-mini:hover { background: var(--primary-dark); }
 .btn-add-mini.disabled { background: #cbd5e0; box-shadow: none; }
 
-/* AJUSTE PARA MÓVILES (Pantallas < 768px) */
 @media (max-width: 768px) {
     .shelf-container .card {
-        width: 180px;  /* Tarjetas más angostas en celular */
-        height: 280px; /* Un poco más bajas */
+        width: 180px;
+        height: 280px;
     }
 }
 
-/* IMAGEN DE LA TARJETA */
 .shelf-container .card-img {
-    height: 55%; /* La imagen ocupa el 55% de la altura de la tarjeta */
+    height: 55%;
     width: 100%;
     position: relative;
 }
@@ -368,14 +336,13 @@ nav {
 .shelf-container .card-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Recorta la imagen para llenar el espacio sin deformar */
+    object-fit: cover;
     display: block;
 }
 
-/* INFO DE LA TARJETA */
 .shelf-container .card-info {
     padding: 12px;
-    height: 45%; /* El resto del espacio */
+    height: 45%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -384,19 +351,18 @@ nav {
 .shelf-container h3 {
     font-size: 1rem;
     margin: 0;
-    white-space: nowrap;      /* Texto en una sola línea */
-    overflow: hidden;         /* Ocultar si sobra */
-    text-overflow: ellipsis;  /* Poner "..." */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .shelf-container .btn-primary {
     width: 100%;
     padding: 8px 0;
     font-size: 0.9rem;
-    margin-top: auto; /* Empujar el botón al fondo */
+    margin-top: auto;
 }
 
-/* BADGES - ETIQUETAS DE COLORES */
 .badge {
     position: absolute; top: 10px; right: 10px; padding: 4px 12px;
     border-radius: 20px; font-size: 0.75rem; font-weight: 800; color: white;
@@ -405,9 +371,8 @@ nav {
 .badge.horno { background: #ed8936; }
 .badge.frita { background: #ecc94b; color: #744210; }
 .badge.bebida { background: #4299e1; }
-.badge.acompañamiento { background: #48bb78; } /* VERDE PARA PEBRE */
+.badge.acompañamiento { background: #48bb78; }
 
-/* ADMIN PANEL (Arreglado) */
 .admin-container { max-width: 1200px; margin: 20px auto; padding: 20px; }
 .admin-view { display: none; }
 .admin-view.active { display: block; animation: fadeIn 0.3s; }
@@ -418,13 +383,9 @@ nav {
 }
 .tab-btn.active { color: var(--primary); border-color: var(--primary); }
 
-/* UTILS */
 .hidden { display: none !important; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- CORRECCIONES FINALES --- */
-
-/* Botones pequeños para el carrito lateral */
 .qty-sm {
     width: 28px;
     height: 28px;
@@ -435,7 +396,6 @@ nav {
     margin: 0 5px;
 }
 
-/* Asegurar que las pestañas del admin se vean en fila */
 .admin-header {
     display: flex;
     gap: 15px;
@@ -444,11 +404,9 @@ nav {
     padding-bottom: 10px;
 }
 
-/* Estilo para la clase active de los contenidos Admin */
 .admin-content { display: none; }
 .admin-content.active { display: block; animation: fadeIn 0.3s; }
 
-/* Ajuste del botón Registrarse en el header */
 .btn-primary {
     display: inline-block;
     text-align: center;
@@ -456,38 +414,32 @@ nav {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- ESTILOS DE VENTANAS MODALES --- */
-
-/* El fondo oscuro que cubre toda la pantalla */
 .modal {
-    display: none; /* Oculto por defecto (JS lo cambia a flex) */
-    position: fixed; /* CRUCIAL: Esto lo saca del flujo normal */
-    z-index: 3000;   /* Asegura que esté encima de TODO (el header tiene 1000) */
+    display: none;
+    position: fixed;
+    z-index: 3000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Fondo negro semitransparente */
-    backdrop-filter: blur(5px);        /* Efecto de desenfoque moderno */
-    
-    /* Para centrar la caja blanca en el medio */
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+
     align-items: center;
     justify-content: center;
 }
 
-/* La caja blanca con el contenido */
 .modal-box {
     background-color: #fff;
     padding: 2rem;
     border-radius: 16px;
     width: 90%;
-    max-width: 400px; /* Que no sea gigante en PC */
+    max-width: 400px;
     position: relative;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    animation: modalPop 0.3s ease-out; /* Pequeña animación de entrada */
+    animation: modalPop 0.3s ease-out;
 }
 
-/* El botón 'X' para cerrar */
 .close {
     position: absolute;
     top: 15px;
@@ -504,7 +456,6 @@ nav {
     color: var(--primary);
 }
 
-/* Inputs dentro del modal para que se vean bonitos */
 .input-field {
     width: 100%;
     padding: 12px;
@@ -521,13 +472,11 @@ nav {
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 
-/* Animación de entrada */
 @keyframes modalPop {
     from { transform: scale(0.95); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
-/* --- SKELETON LOADING (Efecto de Carga Profesional) --- */
 .skeleton {
     background: #e2e8f0;
     background: linear-gradient(90deg, #e2e8f0 25%, #f7fafc 50%, #e2e8f0 75%);
@@ -541,16 +490,14 @@ nav {
     100% { background-position: -200% 0; }
 }
 
-/* Clase para ocultar contenido real mientras carga */
 .loading-hide { display: none !important; }
 
-/* Estructura de la tarjeta esqueleto */
 .card-skeleton {
     background: white;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow);
-    height: 350px; /* Altura aproximada de tu card real */
+    height: 350px;
     display: flex;
     flex-direction: column;
 }
@@ -561,19 +508,16 @@ nav {
 .sk-price { height: 20px; width: 40%; }
 .sk-btn { height: 40px; width: 100%; margin-top: auto; border-radius: 8px; }
 
-
-/* --- NOTIFICACIONES (TOAST) --- */
 .toast-container {
-    position: fixed; /* Fijo en la pantalla, no al final del scroll */
-    bottom: 20px;    /* 20px desde abajo */
-    right: 20px;     /* 20px desde la derecha */
-    z-index: 5000;   /* Por encima de todo, incluso de los modales */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 5000;
     display: flex;
     flex-direction: column;
-    gap: 10px;       /* Espacio entre notificaciones si hay varias */
+    gap: 10px;
 }
 
-/* Animación de entrada suave */
 .toast-container > div {
     animation: slideIn 0.3s ease-out;
 }
@@ -583,7 +527,6 @@ nav {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* --- ANIMACIÓN CARRITO (Feedback visual) --- */
 @keyframes shake {
     0% { transform: rotate(0deg); }
     25% { transform: rotate(5deg); }
@@ -594,10 +537,9 @@ nav {
 
 .cart-shake {
     animation: shake 0.4s ease-in-out;
-    color: var(--primary) !important; /* Se pone rojo al agregar */
+    color: var(--primary) !important;
 }
 
-/* --- CONTROLES DE CANTIDAD (MODAL) --- */
 .qty-control {
     display: flex;
     justify-content: center;
@@ -636,12 +578,8 @@ nav {
     text-align: center;
 }
 
-/* --- ESTILOS DE LA GRILLA (VISTA "VER TODO") --- */
-
-/* El contenedor principal de la rejilla */
 .grid {
     display: grid;
-    /* Esto crea columnas automáticas que no bajan de 220px */
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
     gap: 25px;
     padding: 20px;
@@ -649,7 +587,6 @@ nav {
     margin: 0 auto;
 }
 
-/* Estilo específico para tarjetas DENTRO de la grilla */
 .grid .card {
     background: white;
     border-radius: 16px;
@@ -667,9 +604,8 @@ nav {
     box-shadow: var(--shadow-lg);
 }
 
-/* Control de imagen en la grilla */
 .grid .card-img {
-    height: 180px; /* Altura fija para uniformidad */
+    height: 180px;
     width: 100%;
     overflow: hidden;
     position: relative;
@@ -678,15 +614,14 @@ nav {
 .grid .card-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Recorta la imagen para que llene el espacio */
+    object-fit: cover;
 }
 
-/* Ajuste de contenido */
 .grid .card-info {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Ocupa el espacio restante */
+    flex-grow: 1;
     justify-content: space-between;
 }
 
@@ -696,24 +631,23 @@ nav {
     color: var(--primary-dark);
 }
 
-/* --- LAYOUT GENERAL (Centrado) --- */
+
 .main-wrapper {
-    max-width: 1200px; /* Ancho máximo estándar */
-    margin: 0 auto;    /* Centrado horizontal */
-    padding: 0 15px;   /* Margen seguro en móviles */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
     width: 100%;
 }
 
-/* --- BARRA DE BÚSQUEDA MODERNA --- */
 .search-bar-container {
     position: relative;
     max-width: 600px;
-    margin: 30px auto; /* Separación vertical */
+    margin: 30px auto;
 }
 
 .search-bar-container input {
     width: 100%;
-    padding: 15px 20px 15px 50px; /* Espacio para el icono */
+    padding: 15px 20px 15px 50px;
     border-radius: 12px;
     border: 1px solid #eee;
     background: white;
@@ -724,7 +658,7 @@ nav {
 
 .search-bar-container input:focus {
     outline: none;
-    box-shadow: 0 4px 20px rgba(211, 47, 47, 0.15); /* Sombra roja suave */
+    box-shadow: 0 4px 20px rgba(211, 47, 47, 0.15);
     border-color: var(--primary);
 }
 
@@ -736,9 +670,8 @@ nav {
     opacity: 0.5;
 }
 
-/* --- CARRUSELES MÁS LIMPIOS --- */
 .category-header {
-    padding: 0 5px; /* Alineado con las tarjetas */
+    padding: 0 5px;
     margin-top: 40px;
     margin-bottom: 15px;
     display: flex;
@@ -762,24 +695,21 @@ nav {
 }
 .view-all-link:hover { background: #fff5f5; }
 
-/* Ajuste del contenedor de scroll */
 .shelf-container {
-    padding: 10px 5px 30px 5px; /* Espacio para que la sombra no se corte */
-    margin: 0 -5px; /* Compensación visual */
+    padding: 10px 5px 30px 5px;
+    margin: 0 -5px;
     gap: 20px;
 }
 
-/* Tarjetas más elegantes */
 .shelf-container .card {
-    border: none; /* Sin borde gris */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); /* Sombra muy suave */
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 .shelf-container .card-img {
-    border-radius: 16px 16px 0 0; /* Redondear solo arriba */
+    border-radius: 16px 16px 0 0;
 }
 
-/* --- BOTÓN "VOLVER" (Minimalista) --- */
 .grid-header {
     display: flex;
     align-items: center;
@@ -807,17 +737,16 @@ nav {
     background: var(--text-main);
     color: white;
     border-color: var(--text-main);
-    transform: translateX(-3px); /* Pequeño movimiento a la izquierda */
+    transform: translateX(-3px);
 }
 
-/* --- BOTTOM NAVIGATION (Solo móvil) --- */
 .bottom-nav {
-    display: none; /* Oculto en PC */
+    display: none;
     position: fixed;
     bottom: 0; left: 0; width: 100%;
     background: white;
     box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-    padding: 10px 20px 20px 20px; /* Padding extra abajo para iPhone X+ */
+    padding: 10px 20px 20px 20px;
     justify-content: space-between;
     z-index: 2000;
     border-top: 1px solid #f0f0f0;
@@ -835,8 +764,8 @@ nav {
 .nav-item small { font-size: 0.65rem; font-weight: 600; }
 .nav-item.active { color: var(--primary); }
 
-/* Mostrar solo en pantallas pequeñas */
 @media (max-width: 768px) {
     .bottom-nav { display: flex; }
-    body { padding-bottom: 80px; } /* Espacio para que el contenido no quede tapado */
+    body { padding-bottom: 80px; }
 }
+
