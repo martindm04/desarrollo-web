@@ -137,22 +137,70 @@ nav {
 .prev { left: 20px; }
 .next { right: 20px; }
 
-/* GRID & CARDS */
-.grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px;
-}
-.card {
-    background: white; border-radius: 16px; overflow: hidden;
-    box-shadow: var(--shadow); transition: all 0.3s; cursor: pointer;
-    border: 1px solid transparent; position: relative;
-}
-.card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: #e2e8f0; }
-.card.out { opacity: 0.7; filter: grayscale(1); pointer-events: none; }
+/* --- ESTILO TIPO NETFLIX (CARRUSELES POR CATEGORÍA) --- */
 
-.card-img { height: 180px; background: #f7fafc; display: flex; align-items: center; justify-content: center; }
-.card-img img { width: 100%; height: 100%; object-fit: cover; }
-.card-info { padding: 15px; }
+/* Títulos de sección */
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    font-weight: 800;
+}
+
+.view-all-link {
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Contenedor de Scroll Horizontal (El Carrusel) */
+.shelf-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding: 10px 20px 30px 20px; /* Padding abajo para la sombra */
+    scroll-snap-type: x mandatory; /* Efecto magnético */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Suavidad en iOS */
+}
+
+/* Ocultar barra de scroll (Estético) */
+.shelf-container::-webkit-scrollbar { display: none; }
+.shelf-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Ajuste de tarjetas para que funcionen dentro del shelf */
+.shelf-container .card {
+    min-width: 260px; /* Ancho fijo para que no se aplasten */
+    max-width: 260px;
+    scroll-snap-align: start; /* Alineación al deslizar */
+    flex-shrink: 0;
+}
+
+/* Botón flotante para "Ver Todo" cuando se hace scroll */
+.btn-floating-all {
+    display: block;
+    margin: 20px auto;
+    width: fit-content;
+    background: var(--text-main);
+    color: white;
+    padding: 10px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.2s;
+}
+.btn-floating-all:hover { transform: scale(1.05); }
+
 
 /* BADGES - ETIQUETAS DE COLORES */
 .badge {

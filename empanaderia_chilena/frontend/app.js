@@ -45,58 +45,108 @@ async function api(endpoint, method="GET", body=null) {
     }
 }
 
+// --- UI: GRILLA DE PRODUCTOS ---
+// --- LOGICA UI: HOME & CATALOGO ---
 
 async function loadProducts() {
-    const grid = document.getElementById("grid");
-    
-    // 1. Mostrar Skeletons (Feedback inmediato)
-    if(grid) {
-        grid.innerHTML = ""; // Limpiar
-        // Generamos 4 esqueletos de prueba
-        for(let i=0; i<4; i++) {
-            grid.innerHTML += `
-                <div class="card-skeleton">
-                    <div class="skeleton sk-img"></div>
-                    <div class="sk-body">
-                        <div class="skeleton sk-title"></div>
-                        <div class="skeleton sk-price"></div>
-                        <div class="skeleton sk-btn"></div>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
     try {
-        // 2. Simular un pequeño delay (opcional, para que veas el efecto en local)
-        // await new Promise(r => setTimeout(r, 800)); 
-
         state.products = await api("/products");
-        
-        // 3. Renderizar contenido real
-        renderGrid();
-        renderCarousel();
-        
+        renderHome(); // Por defecto mostramos la vista de categorías
+        renderCarousel(); // El carrusel grande del header
     } catch (e) { 
         console.error(e);
-        toast("Error cargando productos. Revisa el backend.", "error"); 
-        if(grid) grid.innerHTML = "<h3 style='grid-column:1/-1; text-align:center'>Error al conectar con el servidor ⚠️</h3>";
+        toast("Error cargando productos.", "error"); 
     }
 }
 
-// --- UI: GRILLA DE PRODUCTOS ---
-function renderGrid() {
-    const grid = document.getElementById("grid");
-    if(!grid) return;
-
-    const term = document.getElementById("search").value.toLowerCase();
-    const cat = document.getElementById("cat-filter").value;
+// 1. VISTA HOME (Carruseles por Categoría)
+function renderHome() {
+    const container = document.getElementById("home-view");
+    const gridView = document.getElementById("full-grid-view");
     
+    if(!container) return;
+
+    // Mostrar Home, Ocultar Grid
+    container.classList.remove("hidden");
+    gridView.classList.add("hidden");
+    container.innerHTML = "";
+
+    // Definir las categorías y sus títulos bonitos
+    const categories = [
+        { id: 'horno', title: '🔥 Empanadas de Horno' },
+        { id: 'frita', title: '🍳 Empanadas Fritas' },
+        { id: 'bebida', title: '🥤 Bebidas Refrescantes' },
+        { id: 'acompañamiento', title: '🍟 Acompañamientos & Salsas' }
+    ];
+
+    categories.forEach(cat => {
+        // Filtrar productos de esta categoría
+        const products = state.products.filter(p => p.category === cat.id);
+        
+        if (products.length > 0) {
+            // Crear la sección completa
+            const section = document.createElement("section");
+            section.innerHTML = `
+                <div class="category-header">
+                    <div class="category-title">${cat.title}</div>
+                    <div class="view-all-link" onclick="showFullCatalog('${cat.id}')">Ver todo ></div>
+                </div>
+                <div class="shelf-container">
+                    ${products.map(p => createCardHTML(p)).join('')}
+                </div>
+            `;
+            container.appendChild(section);
+        }
+    });
+
+    // Botón final para ver todo
+    container.innerHTML += `
+        <div style="text-align:center; margin: 40px 0;">
+            <button class="btn-floating-all" onclick="showFullCatalog('all')">📜 Ver Menú Completo</button>
+        </div>
+    `;
+}
+
+// 2. VISTA GRILLA (Resultados de búsqueda o "Ver Todo")
+function showFullCatalog(filterCat = 'all') {
+    const home = document.getElementById("home-view");
+    const full = document.getElementById("full-grid-view");
+    const title = document.getElementById("grid-title");
+    
+    home.classList.add("hidden");
+    full.classList.remove("hidden");
+
+    // Actualizar título
+    if(filterCat === 'all') title.innerText = "Todo nuestro Menú";
+    else title.innerText = filterCat.toUpperCase();
+
+    // Renderizar grilla filtrada
+    renderGrid(filterCat);
+}
+
+function showHome() {
+    document.getElementById("search").value = ""; // Limpiar búsqueda
+    renderHome();
+}
+
+function renderGrid(categoryFilter = 'all') {
+    const grid = document.getElementById("grid");
+    const term = document.getElementById("search").value.toLowerCase();
+    
+    // Si el usuario escribe, forzamos la vista de grilla si no estamos en ella
+    if (term.length > 0) {
+        document.getElementById("home-view").classList.add("hidden");
+        document.getElementById("full-grid-view").classList.remove("hidden");
+        document.getElementById("grid-title").innerText = `Resultados para "${term}"`;
+    }
+
     grid.innerHTML = "";
     
-    const filtered = state.products.filter(p => 
-        p.name.toLowerCase().includes(term) && (cat === "all" || p.category === cat)
-    );
+    const filtered = state.products.filter(p => {
+        const matchesTerm = p.name.toLowerCase().includes(term);
+        const matchesCat = categoryFilter === 'all' || p.category === categoryFilter;
+        return matchesTerm && matchesCat;
+    });
 
     if(filtered.length === 0) {
         document.getElementById("empty-state").classList.remove("hidden");
@@ -107,24 +157,33 @@ function renderGrid() {
     filtered.forEach(p => {
         const card = document.createElement("div");
         card.className = `card ${p.stock === 0 ? 'out' : ''}`;
-        card.innerHTML = `
-            <span class="badge ${p.category}">${p.category}</span>
-            <div class="card-img"><img src="${p.image.startsWith('http') ? p.image : 'http://127.0.0.1:8000/static/images/' + p.image}" ...></div>
-            <div class="card-info">
-                <h3>${p.name}</h3>
-                <div style="display:flex; justify-content:space-between;">
-                    <b>$${p.price.toLocaleString('es-CL')}</b>
-                    <small>${p.stock > 0 ? 'Stock: '+p.stock : 'Agotado'}</small>
-                </div>
-                <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="addToCart(${p.id})">
-                    ${p.stock > 0 ? 'Agregar' : 'Sin Stock'}
-                </button>
-            </div>
-        `;
+        card.innerHTML = createCardHTML(p);
         grid.appendChild(card);
     });
 }
 
+// Helper para generar el HTML de la tarjeta (para no repetir código)
+function createCardHTML(p) {
+    // Asegurar URL de imagen
+    const imgUrl = p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000/static/images/${p.image}`;
+    
+    return `
+        <span class="badge ${p.category}">${p.category}</span>
+        <div class="card-img">
+            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'" loading="lazy">
+        </div>
+        <div class="card-info">
+            <h3>${p.name}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="font-size:1.1rem; color:var(--text-main);">$${p.price.toLocaleString('es-CL')}</b>
+                <small style="color:${p.stock > 5 ? 'green' : 'red'}">${p.stock > 0 ? 'Stock: '+p.stock : 'Agotado'}</small>
+            </div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="addToCart(${p.id})">
+                ${p.stock > 0 ? 'Agregar' : 'Sin Stock'}
+            </button>
+        </div>
+    `;
+}
 // --- UI: CARRUSEL (SLIDER) ---
 let currentSlide = 0;
 let carouselInterval;

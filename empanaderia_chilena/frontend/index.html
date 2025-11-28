@@ -44,19 +44,25 @@
             <div class="carousel-track" id="carousel-track">
                 </div>
         </div>
+<div class="controls" style="max-width:800px; margin:0 auto; display:flex; gap:10px; padding:20px;">
+    <input type="text" id="search" placeholder="🔍 Buscar producto..." style="flex:1; padding:12px; border-radius:50px; border:1px solid #ddd; box-shadow:var(--shadow);">
+</div>
 
-        <div class="controls" style="max-width:800px; margin:0 auto; display:flex; gap:10px; padding:20px;">
-            <input type="text" id="search" placeholder="🔍 Buscar (Pino, Bebida...)" style="flex:1; padding:12px; border-radius:50px; border:1px solid #ddd;">
-            <select id="cat-filter" style="padding:10px; border-radius:50px; border:1px solid #ddd; cursor: pointer;">
-                <option value="all">Todo el Menú</option>
-                <option value="horno">De Horno</option>
-                <option value="frita">Fritas</option>
-                <option value="acompañamiento">Acompañamientos</option>
-                <option value="bebida">Bebidas</option>
-            </select>
+<div id="home-view">
+    </div>
+
+        <div id="full-grid-view" class="hidden">
+            <div style="padding: 20px; display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="grid-title">Resultados</h2>
+                <button class="btn-secondary" onclick="showHome()">⬅ Volver al Inicio</button>
+            </div>
+            <main class="grid" id="grid">
+                </main>
         </div>
 
-        <main class="grid" id="grid">
+        <div id="empty-state" class="hidden" style="text-align:center; padding:4rem; color:#aaa;">
+            <h3>No encontramos lo que buscas 😢</h3>
+        </div>
             </main>
         
         <div id="empty-state" class="hidden" style="text-align:center; padding:4rem; color:#aaa;">
