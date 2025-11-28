@@ -137,7 +137,7 @@ nav {
 .prev { left: 20px; }
 .next { right: 20px; }
 
-/* --- ESTILO TIPO NETFLIX (CARRUSELES POR CATEGORÍA) --- */
+/* --- ESTILO TIPO NETFLIX (CORREGIDO Y BLINDADO) --- */
 
 /* Títulos de sección */
 .category-header {
@@ -146,13 +146,14 @@ nav {
     align-items: center;
     padding: 0 20px;
     margin-top: 30px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .category-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: var(--primary-dark);
     font-weight: 800;
+    margin: 0;
 }
 
 .view-all-link {
@@ -165,41 +166,79 @@ nav {
 
 /* Contenedor de Scroll Horizontal (El Carrusel) */
 .shelf-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 20px;
-    padding: 10px 20px 30px 20px; /* Padding abajo para la sombra */
-    scroll-snap-type: x mandatory; /* Efecto magnético */
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Suavidad en iOS */
+    display: flex;              /* Obligatorio para que estén en fila */
+    flex-direction: row;        /* Asegura dirección horizontal */
+    overflow-x: auto;           /* Permite scroll lateral */
+    gap: 15px;                  /* Espacio entre tarjetas */
+    padding: 10px 20px 25px 20px;
+    scroll-snap-type: x mandatory; 
+    -webkit-overflow-scrolling: touch;
+    width: 100%;                /* Que no se salga de la pantalla */
 }
 
-/* Ocultar barra de scroll (Estético) */
+/* Ocultar barra de scroll */
 .shelf-container::-webkit-scrollbar { display: none; }
 .shelf-container { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Ajuste de tarjetas para que funcionen dentro del shelf */
+/* --- REGLAS ESTRICTAS PARA LAS TARJETAS DENTRO DEL CARRUSEL --- */
 .shelf-container .card {
-    min-width: 260px; /* Ancho fijo para que no se aplasten */
-    max-width: 260px;
-    scroll-snap-align: start; /* Alineación al deslizar */
-    flex-shrink: 0;
+    /* Dimensiones FIJAS para evitar explosiones */
+    width: 240px; 
+    min-width: 240px; 
+    max-width: 240px;
+    
+    /* Comportamiento Flex: No crecer, no encoger, base fija */
+    flex: 0 0 auto; 
+    
+    scroll-snap-align: start;
+    margin: 0; /* El gap del padre maneja el espacio */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Para que todas las tarjetas tengan la misma altura */
 }
 
-/* Botón flotante para "Ver Todo" cuando se hace scroll */
+/* Control estricto de la imagen */
+.shelf-container .card-img {
+    height: 160px; /* Altura fija para la zona de la foto */
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid #eee;
+}
+
+.shelf-container .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* CRUCIAL: Recorta la imagen para que llene sin deformar */
+    display: block;
+}
+
+/* Ajuste de texto para que no ocupe mucho espacio */
+.shelf-container .card-info {
+    padding: 12px;
+}
+.shelf-container .card-info h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Puntos suspensivos si el nombre es largo */
+}
+
+/* Botón flotante al final */
 .btn-floating-all {
     display: block;
-    margin: 20px auto;
+    margin: 30px auto;
     width: fit-content;
     background: var(--text-main);
     color: white;
-    padding: 10px 25px;
+    padding: 12px 30px;
     border-radius: 50px;
     cursor: pointer;
     box-shadow: var(--shadow-lg);
-    transition: transform 0.2s;
+    font-weight: bold;
+    border: none;
 }
-.btn-floating-all:hover { transform: scale(1.05); }
 
 
 /* BADGES - ETIQUETAS DE COLORES */
@@ -440,4 +479,64 @@ nav {
     font-weight: 800;
     width: 60px;
     text-align: center;
+}
+
+/* --- ESTILOS DE LA GRILLA (VISTA "VER TODO") --- */
+
+/* El contenedor principal de la rejilla */
+.grid {
+    display: grid;
+    /* Esto crea columnas automáticas que no bajan de 220px */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    gap: 25px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Estilo específico para tarjetas DENTRO de la grilla */
+.grid .card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.grid .card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Control de imagen en la grilla */
+.grid .card-img {
+    height: 180px; /* Altura fija para uniformidad */
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.grid .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Recorta la imagen para que llene el espacio */
+}
+
+/* Ajuste de contenido */
+.grid .card-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Ocupa el espacio restante */
+    justify-content: space-between;
+}
+
+.grid .card-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: var(--primary-dark);
 }
