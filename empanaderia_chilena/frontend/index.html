@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<header>
+    <header>
         <nav>
             <div class="logo" onclick="window.location.reload()" style="cursor: pointer;">
                 🥟 La Chilena
@@ -36,25 +36,22 @@
     </header>
 
 
-    <div id="main-app">
+    <div class="main-wrapper">
         
-        <div class="carousel-container" id="hero-carousel">
-            <button class="c-arrow prev" onclick="moveSlide(-1)">❮</button>
-            <button class="c-arrow next" onclick="moveSlide(1)">❯</button>
-            <div class="carousel-track" id="carousel-track">
-                </div>
+        <div class="search-bar-container">
+            <input type="text" id="search" placeholder="¿Qué se te antoja hoy? 🥟" autocomplete="off">
+            <span class="search-icon">🔍</span>
         </div>
-<div class="controls" style="max-width:800px; margin:0 auto; display:flex; gap:10px; padding:20px;">
-    <input type="text" id="search" placeholder="🔍 Buscar producto..." style="flex:1; padding:12px; border-radius:50px; border:1px solid #ddd; box-shadow:var(--shadow);">
-</div>
 
-<div id="home-view">
-    </div>
+        <div id="home-view">
+            </div>
 
         <div id="full-grid-view" class="hidden">
-            <div style="padding: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="grid-header">
+                <button class="btn-back" onclick="showHome()">
+                    <span style="font-size: 1.2rem;">‹</span> Atrás
+                </button>
                 <h2 id="grid-title">Resultados</h2>
-                <button class="btn-secondary" onclick="showHome()">⬅ Volver al Inicio</button>
             </div>
             <main class="grid" id="grid">
                 </main>
@@ -63,13 +60,8 @@
         <div id="empty-state" class="hidden" style="text-align:center; padding:4rem; color:#aaa;">
             <h3>No encontramos lo que buscas 😢</h3>
         </div>
-            </main>
-        
-        <div id="empty-state" class="hidden" style="text-align:center; padding:4rem; color:#aaa;">
-            <h3>No encontramos lo que buscas 😢</h3>
-        </div>
-    </div>
 
+    </div>
     <section id="admin-panel" class="admin-container hidden">
         <div style="margin-bottom:20px; border-bottom:2px solid #eee;">
             <button class="tab-btn active" onclick="switchTab('products')">📦 Inventario</button>
@@ -307,6 +299,25 @@
         <button class="btn-primary" onclick="confirmStockUpdate()">Confirmar Ingreso</button>
     </div>
 </div>
+
+<nav class="bottom-nav">
+    <a href="#" onclick="showHome()" class="nav-item active">
+        <span>🏠</span>
+        <small>Inicio</small>
+    </a>
+    <a href="#" onclick="showFullCatalog('all')" class="nav-item">
+        <span>🔍</span>
+        <small>Buscar</small>
+    </a>
+    <a href="#" onclick="toggleCart()" class="nav-item">
+        <span>🛒</span>
+        <small>Canasta</small>
+    </a>
+    <a href="#" onclick="state.user ? openOrderHistory() : openModal('login-modal')" class="nav-item">
+        <span>👤</span>
+        <small>Perfil</small>
+    </a>
+</nav>
 
     <script src="app.js"></script>
 

@@ -1,12 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from database import db
+from database import users_collection
 from models import User, LoginRequest
 from auth import get_password_hash, verify_password, create_token
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
+from config import limiter
 
 router = APIRouter(tags=["Usuarios"])
 
@@ -14,8 +11,8 @@ router = APIRouter(tags=["Usuarios"])
 def register(user: User):
     if len(user.password) < 8:
         raise HTTPException(400, "La contraseña debe tener al menos 8 caracteres")
-    
-    if db.users.find_one({"email": user.email}):
+
+    if users_collection.users.find_one({"email": user.email}):
         raise HTTPException(400, "El usuario ya existe")
     
     user_dict = user.model_dump()
@@ -23,13 +20,13 @@ def register(user: User):
     # Lógica simple de roles: si contiene "admin", es admin (Solo para dev/demo)
     user_dict["role"] = "admin" if "admin" in user.email else "cliente"
     
-    db.users.insert_one(user_dict)
+    users_collection.users.insert_one(user_dict)
     return {"message": "Cuenta creada exitosamente"}
 
 @router.post("/login")
 @limiter.limit("5/minute")
 def login(request: Request, creds: LoginRequest):
-    user = db.users.find_one({
+    user = users_collection.users.find_one({
         "$or": [{"email": creds.identifier}, {"name": creds.identifier}]
     })
 

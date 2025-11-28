@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
-from database import db
+from database import products_collection, orders_collection
 from models import Order
 from auth import get_current_user, get_admin
 from bson import ObjectId
@@ -10,7 +10,7 @@ router = APIRouter(tags=["Ordenes"])
 def create_order(order: Order, current_user: dict = Depends(get_current_user)):
     # Validar productos primero (Existencia)
     for item in order.items:
-        if not db.products.find_one({"id": item.product_id}):
+        if not products_collection.products.find_one({"id": item.product_id}):
             raise HTTPException(404, f"Producto {item.name} no existe")
 
     # TRANSACCIÓN ATÓMICA MANUAL
@@ -19,7 +19,7 @@ def create_order(order: Order, current_user: dict = Depends(get_current_user)):
     # haremos la verificación atómica directa.
     
     for item in order.items:
-        result = db.products.update_one(
+        result = orders_collection.products.update_one(
             {
                 "id": item.product_id, 
                 "stock": {"$gte": item.quantity} # <--- CONDICIÓN DE SEGURIDAD
@@ -35,7 +35,7 @@ def create_order(order: Order, current_user: dict = Depends(get_current_user)):
     # Guardar Orden
     order_data = order.model_dump()
     order_data["customer_email"] = current_user["email"]
-    res = db.orders.insert_one(order_data)
+    res = orders_collection.orders.insert_one(order_data)
     
     return {"id": str(res.inserted_id), "status": "confirmado"}
 
@@ -45,12 +45,12 @@ def my_orders(email: str, current_user: dict = Depends(get_current_user)):
     if current_user["email"] != email and current_user["role"] != "admin":
         raise HTTPException(403, "No puedes ver órdenes de otros usuarios")
         
-    cursor = db.orders.find({"customer_email": email})
+    cursor = orders_collection.orders.find({"customer_email": email})
     return [{"id": str(d.pop("_id")), **d} for d in cursor]
 
 @router.get("/orders", dependencies=[Depends(get_admin)])
 def all_orders():
-    cursor = db.orders.find().sort("_id", -1).limit(100)
+    cursor = orders_collection.orders.find().sort("_id", -1).limit(100)
     return [{"id": str(d.pop("_id")), **d} for d in cursor]
   
 @router.patch("/orders/{order_id}/status", dependencies=[Depends(get_admin)])
@@ -63,7 +63,7 @@ def update_order_status(order_id: str, status: str = Body(..., embed=True)):
     try:
         # Intentamos convertir a ObjectId si es necesario, o buscamos por string
         oid = ObjectId(order_id)
-        res = db.orders.update_one({"_id": oid}, {"$set": {"status": status}})
+        res = orders_collection.orders.update_one({"_id": oid}, {"$set": {"status": status}})
     except:
         # Si falla la conversión a ObjectId (por si acaso), intentamos buscar por id string si lo tuvieras
         raise HTTPException(400, "ID de orden inválido")
@@ -72,5 +72,4 @@ def update_order_status(order_id: str, status: str = Body(..., embed=True)):
         raise HTTPException(404, "Orden no encontrada")
         
     return {"message": f"Orden actualizada a {status}"}
-  
-  
+

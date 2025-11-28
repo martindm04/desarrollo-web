@@ -101,8 +101,10 @@ function renderHome() {
 
     // Botón final para ver todo
     container.innerHTML += `
-        <div style="text-align:center; margin: 40px 0;">
-            <button class="btn-floating-all" onclick="showFullCatalog('all')">📜 Ver Menú Completo</button>
+        <div style="text-align:center; margin: 40px 0; padding-bottom: 40px;">
+            <button class="btn-floating-all" onclick="showFullCatalog('all')">
+                📜 Ver Menú Completo
+            </button>
         </div>
     `;
 }
@@ -163,27 +165,39 @@ function renderGrid(categoryFilter = 'all') {
 }
 
 // Helper para generar el HTML de la tarjeta (para no repetir código)
+// Helper para generar el HTML de la tarjeta (DISEÑO APP MÓVIL)
 function createCardHTML(p) {
-    // Asegurar URL de imagen
     const imgUrl = p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000/static/images/${p.image}`;
+    const hasStock = p.stock > 0;
     
     return `
-        <span class="badge ${p.category}">${p.category}</span>
         <div class="card-img">
-            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'" loading="lazy">
+            <span class="badge ${p.category}">${p.category}</span>
+            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'" loading="lazy" alt="${p.name}">
         </div>
         <div class="card-info">
             <h3>${p.name}</h3>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="font-size:1.1rem; color:var(--text-main);">$${p.price.toLocaleString('es-CL')}</b>
-                <small style="color:${p.stock > 5 ? 'green' : 'red'}">${p.stock > 0 ? 'Stock: '+p.stock : 'Agotado'}</small>
+            
+            <div class="card-footer">
+                <div class="price-info">
+                    <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
+                    <small style="font-size:0.7rem; color:${hasStock ? '#718096' : '#e53e3e'}">
+                        ${hasStock ? 'Disponible' : 'Agotado'}
+                    </small>
+                </div>
+                
+                <button 
+                    class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
+                    onclick="${hasStock ? `addToCart(${p.id})` : ''}"
+                    aria-label="Agregar al carrito"
+                >
+                    ${hasStock ? '+' : '×'}
+                </button>
             </div>
-            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="addToCart(${p.id})">
-                ${p.stock > 0 ? 'Agregar' : 'Sin Stock'}
-            </button>
         </div>
     `;
 }
+
 // --- UI: CARRUSEL (SLIDER) ---
 let currentSlide = 0;
 let carouselInterval;

@@ -55,63 +55,121 @@ nav {
 }
 .btn-primary:hover { background: var(--primary-dark); }
 
-/* --- CARRUSEL (CORREGIDO) --- */
-.carousel-container {
-    max-width: 1100px;
-    margin: 30px auto;
-    height: 360px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    position: relative;
+/* --- CARRUSELES RESPONSIVOS (VERSIÓN FINAL) --- */
+
+/* 1. Contenedor de la fila (El riel) */
+.shelf-container {
+    display: flex;
+    flex-wrap: nowrap;        /* OBLIGATORIO: Nunca bajar a la siguiente línea */
+    overflow-x: auto;         /* Permitir deslizar hacia los lados */
+    gap: 15px;                /* Espacio entre tarjetas */
+    padding: 10px 15px 30px 15px; /* Espacio para la sombra inferior */
+    
+    /* Scroll suave nativo */
+    scroll-snap-type: x mandatory; 
+    -webkit-overflow-scrolling: touch;
+    
+    /* Ocultar barra de scroll */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.shelf-container::-webkit-scrollbar { display: none; }
+
+/* 2. La Tarjeta (El ladrillo rígido) */
+.shelf-container .card {
+    /* GEOMETRÍA RÍGIDA: Esto evita que se aplasten */
+    flex: 0 0 auto;           /* No crecer, NO ENCOGER, base auto */
+    width: 240px;             /* Ancho fijo ideal para PC */
+    min-width: 240px;         /* Seguro de vida: nunca menos de esto */
+    
+    /* Estructura interna vertical */
+    display: flex;
+    flex-direction: column;
+    height: 100%;             /* Altura completa del padre */
+    
     background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    scroll-snap-align: start; /* Efecto magnético al soltar */
+    border: none;             /* Limpieza visual */
+    overflow: hidden;         /* Recortar bordes de imagen */
 }
 
-.carousel-track {
-    display: flex;
-    height: 100%;
-    transition: transform 0.5s ease-in-out; /* Suavidad al moverse */
-}
-
-.carousel-slide {
-    min-width: 100%; /* Ocupa todo el ancho */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 80px; /* Más espacio interno */
+/* 3. La Imagen (Fija y recortada) */
+.shelf-container .card-img {
+    height: 140px;            /* Altura fija: fundamental para uniformidad */
+    width: 100%;
+    flex-shrink: 0;           /* Prohibido encoger la foto */
     position: relative;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-/* Texto del Carrusel */
-.carousel-content {
-    max-width: 50%;
-    z-index: 2;
+.shelf-container .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;        /* Recorte inteligente (zoom) */
+    display: block;
 }
 
-.carousel-content h2 {
-    font-size: 2.5rem;
-    color: var(--primary-dark);
-    margin-bottom: 10px;
-    line-height: 1.2;
+/* 4. Información (Texto y Botón) */
+.shelf-container .card-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;             /* Llenar el espacio restante */
+    justify-content: space-between;
 }
 
-.carousel-content p {
-    font-size: 1.1rem;
-    color: #555;
-    margin-bottom: 20px;
+.shelf-container h3 {
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+    white-space: nowrap;      /* Texto en una línea */
+    overflow: hidden;
+    text-overflow: ellipsis;  /* "..." si es muy largo */
 }
 
-.carousel-img {
-    height: 85%;
-    object-fit: contain;
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
-    transition: transform 0.3s;
+.shelf-container .btn-primary {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 0;
+    font-size: 0.9rem;
 }
 
-.carousel-slide:hover .carousel-img {
-    transform: scale(1.05); /* Efecto zoom sutil */
+/* --- ADAPTACIÓN PARA CELULARES --- */
+@media (max-width: 768px) {
+    .shelf-container .card {
+        width: 170px;         /* Más angosto para pantallas chicas */
+        min-width: 170px;     /* Forzar el ancho mínimo */
+    }
+    
+    .shelf-container .card-img {
+        height: 110px;        /* Imagen un poco más baja */
+    }
+    
+    .shelf-container h3 {
+        font-size: 0.9rem;    /* Texto un poco más chico */
+    }
 }
 
+/* --- ARREGLO DEL BOTÓN "VER MENÚ COMPLETO" --- */
+.btn-floating-all {
+    background: #2d3748;      /* Gris oscuro elegante */
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;      /* Redondo tipo píldora */
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+    display: inline-block;
+}
+
+.btn-floating-all:hover {
+    background: black;
+    transform: scale(1.05);
+}
 /* Flechas de navegación */
 .c-arrow {
     position: absolute;
@@ -137,109 +195,206 @@ nav {
 .prev { left: 20px; }
 .next { right: 20px; }
 
-/* --- ESTILO TIPO NETFLIX (CORREGIDO Y BLINDADO) --- */
+/* --- ESTILO TIPO NETFLIX (RESPONSIVO REAL) --- */
+/* =========================================
+   APP MOBILE EXPERIENCE (Rediseño Premium)
+   ========================================= */
 
-/* Títulos de sección */
+/* --- TÍTULOS DE SECCIÓN --- */
 .category-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    margin-top: 30px;
-    margin-bottom: 10px;
+    margin-top: 25px;
+    margin-bottom: 12px;
 }
 
 .category-title {
-    font-size: 1.4rem;
-    color: var(--primary-dark);
-    font-weight: 800;
-    margin: 0;
+    font-size: 1.2rem; /* Tamaño más nativo */
+    color: #1a202c;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .view-all-link {
-    color: var(--secondary);
-    text-decoration: none;
+    font-size: 0.8rem;
+    color: var(--primary);
     font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
+    background: rgba(211, 47, 47, 0.08); /* Fondo sutil */
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.2s;
 }
 
-/* Contenedor de Scroll Horizontal (El Carrusel) */
+/* --- CONTENEDOR DEL CARRUSEL (RIEL HORIZONTAL) --- */
 .shelf-container {
-    display: flex;              /* Obligatorio para que estén en fila */
-    flex-direction: row;        /* Asegura dirección horizontal */
-    overflow-x: auto;           /* Permite scroll lateral */
-    gap: 15px;                  /* Espacio entre tarjetas */
-    padding: 10px 20px 25px 20px;
-    scroll-snap-type: x mandatory; 
+    display: flex !important;       /* !important para forzar fila */
+    flex-direction: row !important; /* Asegurar dirección horizontal */
+    flex-wrap: nowrap !important;   /* PROHIBIDO bajar de línea */
+    overflow-x: auto;
+    gap: 16px;                      /* Espacio moderno */
+    padding: 5px 20px 30px 20px;    /* Espacio para sombras */
+    
+    /* Física de scroll nativa iOS/Android */
+    scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    width: 100%;                /* Que no se salga de la pantalla */
+    
+    /* Ocultar scrollbars */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-
-/* Ocultar barra de scroll */
 .shelf-container::-webkit-scrollbar { display: none; }
-.shelf-container { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* --- REGLAS ESTRICTAS PARA LAS TARJETAS DENTRO DEL CARRUSEL --- */
+/* --- TARJETA DE PRODUCTO (APP STYLE) --- */
 .shelf-container .card {
-    /* Dimensiones FIJAS para evitar explosiones */
-    width: 240px; 
-    min-width: 240px; 
-    max-width: 240px;
-    
-    /* Comportamiento Flex: No crecer, no encoger, base fija */
+    /* Geometría Rígida */
     flex: 0 0 auto; 
+    width: 200px;
+    height: 280px;
     
+    /* Estilo "Card" Moderno */
+    background: #ffffff;
+    border-radius: 20px; /* ¡Redondeado fuerte! */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06); /* Sombra difusa y elegante */
+    border: 1px solid rgba(0,0,0,0.02);
+    
+    /* Comportamiento */
     scroll-snap-align: start;
-    margin: 0; /* El gap del padre maneja el espacio */
     display: flex;
     flex-direction: column;
-    height: 100%; /* Para que todas las tarjetas tengan la misma altura */
+    overflow: hidden; /* Para que la imagen respete el redondeado */
+    transition: transform 0.2s;
 }
 
-/* Control estricto de la imagen */
+.shelf-container .card:active {
+    transform: scale(0.98); /* Efecto de "toque" al pulsar */
+}
+
+/* --- IMAGEN DEL PRODUCTO --- */
 .shelf-container .card-img {
-    height: 160px; /* Altura fija para la zona de la foto */
+    height: 150px; /* Imagen protagonista */
     width: 100%;
-    overflow: hidden;
     position: relative;
-    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
 }
 
 .shelf-container .card-img img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* CRUCIAL: Recorta la imagen para que llene sin deformar */
-    display: block;
+    object-fit: cover;
 }
 
-/* Ajuste de texto para que no ocupe mucho espacio */
+/* Badge (Etiqueta) Flotante */
+.shelf-container .badge {
+    top: 12px; left: 12px; right: auto; /* Mover a la izquierda */
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    backdrop-filter: blur(4px);
+}
+
+/* --- INFORMACIÓN Y ACCIONES --- */
 .shelf-container .card-info {
     padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
-.shelf-container .card-info h3 {
-    font-size: 1rem;
-    margin-bottom: 5px;
-    white-space: nowrap;
+
+.shelf-container h3 {
+    font-size: 0.95rem;
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    
+    /* Truncar texto elegante */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Máximo 2 líneas */
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis; /* Puntos suspensivos si el nombre es largo */
+    line-height: 1.3;
 }
 
-/* Botón flotante al final */
-.btn-floating-all {
-    display: block;
-    margin: 30px auto;
-    width: fit-content;
-    background: var(--text-main);
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.price-tag {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1a202c;
+}
+
+/* Botón "Agregar" Minimalista (Círculo con +) */
+.btn-add-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
     color: white;
-    padding: 12px 30px;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: var(--shadow-lg);
-    font-weight: bold;
     border: none;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+    transition: background 0.2s;
+}
+.btn-add-mini:hover { background: var(--primary-dark); }
+.btn-add-mini.disabled { background: #cbd5e0; box-shadow: none; }
+
+/* AJUSTE PARA MÓVILES (Pantallas < 768px) */
+@media (max-width: 768px) {
+    .shelf-container .card {
+        width: 180px;  /* Tarjetas más angostas en celular */
+        height: 280px; /* Un poco más bajas */
+    }
 }
 
+/* IMAGEN DE LA TARJETA */
+.shelf-container .card-img {
+    height: 55%; /* La imagen ocupa el 55% de la altura de la tarjeta */
+    width: 100%;
+    position: relative;
+}
+
+.shelf-container .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Recorta la imagen para llenar el espacio sin deformar */
+    display: block;
+}
+
+/* INFO DE LA TARJETA */
+.shelf-container .card-info {
+    padding: 12px;
+    height: 45%; /* El resto del espacio */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.shelf-container h3 {
+    font-size: 1rem;
+    margin: 0;
+    white-space: nowrap;      /* Texto en una sola línea */
+    overflow: hidden;         /* Ocultar si sobra */
+    text-overflow: ellipsis;  /* Poner "..." */
+}
+
+.shelf-container .btn-primary {
+    width: 100%;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    margin-top: auto; /* Empujar el botón al fondo */
+}
 
 /* BADGES - ETIQUETAS DE COLORES */
 .badge {
@@ -539,4 +694,149 @@ nav {
     font-size: 1.1rem;
     margin-bottom: 10px;
     color: var(--primary-dark);
+}
+
+/* --- LAYOUT GENERAL (Centrado) --- */
+.main-wrapper {
+    max-width: 1200px; /* Ancho máximo estándar */
+    margin: 0 auto;    /* Centrado horizontal */
+    padding: 0 15px;   /* Margen seguro en móviles */
+    width: 100%;
+}
+
+/* --- BARRA DE BÚSQUEDA MODERNA --- */
+.search-bar-container {
+    position: relative;
+    max-width: 600px;
+    margin: 30px auto; /* Separación vertical */
+}
+
+.search-bar-container input {
+    width: 100%;
+    padding: 15px 20px 15px 50px; /* Espacio para el icono */
+    border-radius: 12px;
+    border: 1px solid #eee;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.search-bar-container input:focus {
+    outline: none;
+    box-shadow: 0 4px 20px rgba(211, 47, 47, 0.15); /* Sombra roja suave */
+    border-color: var(--primary);
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+}
+
+/* --- CARRUSELES MÁS LIMPIOS --- */
+.category-header {
+    padding: 0 5px; /* Alineado con las tarjetas */
+    margin-top: 40px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    color: #2d3748;
+    letter-spacing: -0.5px;
+}
+
+.view-all-link {
+    background: #f7fafc;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+.view-all-link:hover { background: #fff5f5; }
+
+/* Ajuste del contenedor de scroll */
+.shelf-container {
+    padding: 10px 5px 30px 5px; /* Espacio para que la sombra no se corte */
+    margin: 0 -5px; /* Compensación visual */
+    gap: 20px;
+}
+
+/* Tarjetas más elegantes */
+.shelf-container .card {
+    border: none; /* Sin borde gris */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); /* Sombra muy suave */
+}
+
+.shelf-container .card-img {
+    border-radius: 16px 16px 0 0; /* Redondear solo arriba */
+}
+
+/* --- BOTÓN "VOLVER" (Minimalista) --- */
+.grid-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-top: 20px;
+}
+
+.btn-back {
+    background: white;
+    border: 1px solid #eee;
+    padding: 8px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.btn-back:hover {
+    background: var(--text-main);
+    color: white;
+    border-color: var(--text-main);
+    transform: translateX(-3px); /* Pequeño movimiento a la izquierda */
+}
+
+/* --- BOTTOM NAVIGATION (Solo móvil) --- */
+.bottom-nav {
+    display: none; /* Oculto en PC */
+    position: fixed;
+    bottom: 0; left: 0; width: 100%;
+    background: white;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+    padding: 10px 20px 20px 20px; /* Padding extra abajo para iPhone X+ */
+    justify-content: space-between;
+    z-index: 2000;
+    border-top: 1px solid #f0f0f0;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #a0aec0;
+    font-size: 1.2rem;
+    gap: 4px;
+}
+.nav-item small { font-size: 0.65rem; font-weight: 600; }
+.nav-item.active { color: var(--primary); }
+
+/* Mostrar solo en pantallas pequeñas */
+@media (max-width: 768px) {
+    .bottom-nav { display: flex; }
+    body { padding-bottom: 80px; } /* Espacio para que el contenido no quede tapado */
 }
