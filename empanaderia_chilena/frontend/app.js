@@ -1,25 +1,36 @@
 const API_PORT = 8000;
-const API_HOST = window.location.hostname; 
-const API = `http://${API_HOST}:${API_PORT}`;
+const API_HOST = window.location.hostname;
+const API = `http://${API_HOST}:${API_PORT}`; 
 
-console.log(`📡 Conectando a la API en: ${API}`);
+console.log(`📡 Conectando a: ${API}`);
 
 let state = { user: null, token: null, products: [], cart: [] };
-let isEditingId = null;
-let currentSlide = 0;
-let carouselInterval;
-let currentEditingProductId = null;
-let salesChartInstance = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+    document.getElementById("full-grid-view").classList.add("hidden");
+    const adminPanel = document.getElementById("admin-panel");
+    if(adminPanel) adminPanel.classList.add("hidden");
+
     loadSession();
-    await loadProducts();
+    loadCartFromStorage();
     renderCart();
 
-    document.addEventListener("keydown", e => { if(e.key === "Escape") closeModals(); });
+    try {
+        state.products = await api("/products");
+        renderHome();
+    } catch (e) {
+        console.error("Error cargando productos iniciales:", e);
+    }
 
     const searchInput = document.getElementById("search");
-    if(searchInput) searchInput.addEventListener("keyup", () => renderGrid('all'));
+    if(searchInput) {
+        searchInput.value = ""; 
+        searchInput.addEventListener("keyup", (e) => {
+            if(e.target.value.length > 0) renderGrid();
+            else showHome();
+        });
+    }
 });
 
 async function api(endpoint, method="GET", body=null) {
@@ -441,7 +452,6 @@ async function openOrderHistory() {
     }
 }
 
-// --- ADMIN PANEL ---
 function toggleAdminPanel() {
     const adminPanel = document.getElementById("admin-panel");
     const mainApp = document.getElementById("main-app");
