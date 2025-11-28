@@ -11,30 +11,25 @@
 
     <header>
         <nav>
-            <div class="logo" onclick="window.location.reload()" style="cursor: pointer;">
-                🥟 La Chilena
-            </div>
+            <div class="logo" onclick="window.location.reload()">🥟 La Chilena</div>
             
-            <div class="nav-group">
-                <div id="auth-links">
-                    <a href="#" class="nav-link" onclick="openModal('login-modal')">Iniciar Sesión</a>
-                    <a href="#" class="btn-primary" onclick="openModal('register-modal')" style="color: white; text-decoration: none; padding: 8px 15px;">Registrarse</a>
-                </div>
+            <div id="auth-links" class="nav-group-desktop">
+                <a href="#" class="nav-link" onclick="openModal('login-modal')">Iniciar Sesión</a>
+                <a href="#" class="btn-primary" onclick="openModal('register-modal')" style="padding: 8px 15px;">Registrarse</a>
+            </div>
 
-                <div id="user-info" class="hidden" style="display: flex; align-items: center; gap: 10px;">
-                    <span id="user-name-display" style="font-weight: bold;">Usuario</span>
-                    <a href="#" class="nav-link" onclick="openOrderHistory()">📜 Mis Pedidos</a>
-                    <a href="#" id="admin-link" class="hidden nav-link" onclick="toggleAdminPanel()" style="color: #FBC02D;">⚙️ Admin</a>
-                    <a href="#" class="nav-link" onclick="logout()">Salir</a>
-                </div>
+            <div id="user-info" class="nav-group-desktop hidden" style="align-items: center; gap: 10px;">
+                <span id="user-name-display" style="font-weight: bold; color: var(--primary);">Usuario</span>
+                <a href="#" class="nav-link" onclick="openOrderHistory()">Mis Pedidos</a>
+                <a href="#" id="admin-link" class="hidden nav-link" onclick="toggleAdminPanel()">⚙️ Admin</a>
+                <a href="#" class="nav-link" onclick="logout()" style="color: #666;">Salir</a>
+            </div>
 
-                <div class="cart-icon" onclick="toggleCart()">
-                    🛒 <span id="cart-count">0</span>
-                </div>
+            <div class="cart-icon" onclick="toggleCart()">
+                🛒 <span id="cart-count">0</span>
             </div>
         </nav>
     </header>
-
 
     <div class="main-wrapper">
         
@@ -157,7 +152,6 @@
             <button class="btn-primary" style="width:100%;" onclick="openCheckout()">Ir a Pagar</button>
         </div>
     </div>
-    <div id="cart-overlay" onclick="toggleCart()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2400;"></div>
 
     <div id="login-modal" class="modal hidden" style="display:none;">
         <div class="modal-box">

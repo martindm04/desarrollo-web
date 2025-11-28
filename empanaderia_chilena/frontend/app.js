@@ -69,8 +69,11 @@ async function loadProducts() {
 
 function createCardHTML(p) {
     let imgUrl = p.image;
-    if (!imgUrl.startsWith('http')) {
-        imgUrl = imgUrl.startsWith('/') ? `${API}${imgUrl}` : `${API}/static/images/${imgUrl}`;
+
+    if (imgUrl.startsWith('/')) {
+        imgUrl = `${API}${imgUrl}`;
+    } else if (!imgUrl.startsWith('http')) {
+        imgUrl = `${API}/static/images/${imgUrl}`;
     }
 
     const hasStock = p.stock > 0;
@@ -85,15 +88,9 @@ function createCardHTML(p) {
             <div class="card-footer">
                 <div class="price-info">
                     <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
-                    <small style="font-size:0.7rem; color:${hasStock ? '#718096' : '#e53e3e'}">
-                        ${hasStock ? 'Disponible' : 'Agotado'}
-                    </small>
                 </div>
-                <button 
-                    class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
-                    onclick="${hasStock ? `addToCart(${p.id})` : ''}"
-                    aria-label="Agregar al carrito"
-                >
+                <button class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
+                    onclick="${hasStock ? `addToCart(${p.id})` : ''}">
                     ${hasStock ? '+' : '×'}
                 </button>
             </div>
@@ -768,8 +765,10 @@ function logout() {
 }
 
 function updateAuthUI() {
+    console.log("Actualizando interfaz de usuario...");
     const authLinks = document.getElementById("auth-links");
     const userInfo = document.getElementById("user-info");
+    const bottomProfile = document.querySelectorAll(".nav-item")[3];
 
     if (state.user) {
         if(authLinks) authLinks.classList.add("hidden");
@@ -778,17 +777,36 @@ function updateAuthUI() {
             userInfo.style.display = "flex";
             document.getElementById("user-name-display").innerText = state.user.name;
         }
-        if(state.user.role === "admin") {
-            const adminLink = document.getElementById("admin-link");
-            if(adminLink) adminLink.classList.remove("hidden");
+
+        const adminLink = document.getElementById("admin-link");
+        if(state.user.role === 'admin' && adminLink) {
+            adminLink.classList.remove("hidden");
+
+            createMobileAdminBtn();
         }
+
+        if(bottomProfile) bottomProfile.innerHTML = `<span>👤</span><small>${state.user.name.split(' ')[0]}</small>`;
+
     } else {
-        if(authLinks) {
-            authLinks.classList.remove("hidden");
-            authLinks.style.display = "flex";
-        }
+        if(authLinks) authLinks.classList.remove("hidden");
         if(userInfo) userInfo.classList.add("hidden");
+        if(bottomProfile) bottomProfile.innerHTML = `<span>👤</span><small>Perfil</small>`;
+
+        const btn = document.getElementById("mobile-admin-btn");
+        if(btn) btn.remove();
     }
+}
+
+function createMobileAdminBtn() {
+    if(document.getElementById("mobile-admin-btn")) return;
+    if(window.innerWidth > 768) return;
+
+    const btn = document.createElement("button");
+    btn.id = "mobile-admin-btn";
+    btn.innerHTML = "⚙️";
+    btn.onclick = toggleAdminPanel;
+    btn.style.cssText = "position:fixed; bottom:90px; right:20px; width:50px; height:50px; border-radius:50%; background:#2d3748; color:white; font-size:1.5rem; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:4500;";
+    document.body.appendChild(btn);
 }
 
 function toast(msg, type="info") {
