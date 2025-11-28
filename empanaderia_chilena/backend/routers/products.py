@@ -1,10 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile
 from typing import List
-from database import db, products_collection
+from database import products_collection
 from models import Product
 from auth import get_admin
 import shutil
-import os
 import uuid
 
 router = APIRouter(tags=["Productos"])
@@ -27,18 +26,15 @@ def upload_image(file: UploadFile = File(...)):
 
         file_ext = file.filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_ext}"
-
         save_path = f"static/images/{unique_filename}"
 
         with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        file_url = f"/static/images/{unique_filename}" 
-
-        return {"url": file_url}
+        return {"url": f"/{save_path}"}
 
     except Exception as e:
-        print(e)
+        print(f"Error subida: {e}")
         raise HTTPException(500, "Error al subir la imagen")
 
 @router.post("/products", dependencies=[Depends(get_admin)])
@@ -51,16 +47,11 @@ def add_prod(p: Product):
 @router.put("/products/{pid}", dependencies=[Depends(get_admin)])
 def update_product(pid: int, product_update: Product):
     update_data = product_update.model_dump()
-
-    result = products_collection.update_one(
-        {"id": pid},
-        {"$set": update_data}
-    )
+    result = products_collection.update_one({"id": pid}, {"$set": update_data})
 
     if result.matched_count == 0:
         raise HTTPException(404, "Producto no encontrado")
-
-    return {"message": "Producto actualizado correctamente"}
+    return {"message": "Producto actualizado"}
 
 @router.delete("/products/{pid}", dependencies=[Depends(get_admin)])
 def del_prod(pid: int):
@@ -69,9 +60,8 @@ def del_prod(pid: int):
     return {"message": "Eliminado"}
 
 @router.post("/admin/stock/{pid}", dependencies=[Depends(get_admin)])
-def add_stock(pid: int, quantity: int = Body(..., embed=True)):
-    res = products_collection.update_one({"id": pid}, {"$inc": {"stock": quantity}})
+def add_stock(pid: int, quantity: dict):
+    qty = quantity.get("quantity")
+    res = products_collection.update_one({"id": pid}, {"$inc": {"stock": qty}})
     if res.matched_count == 0: raise HTTPException(404, "Producto no encontrado")
     return {"message": "Stock actualizado"}
-
-

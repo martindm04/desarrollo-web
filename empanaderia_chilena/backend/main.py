@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 from routers import users, products, orders
 from database import products_collection
-
 from config import limiter
 
 load_dotenv()
@@ -20,7 +19,7 @@ logger = logging.getLogger("api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if products_collection.count_documents({}) == 0:
-        base_img = "http://127.0.0.1:8000/static/images"
+        base_img = "/static/images"
         initials = [
             {"id": 1, "name": "Empanada de Pino", "category": "horno", "price": 2500, "stock": 50, "image": f"{base_img}/pino.jpg"},
             {"id": 2, "name": "Empanada de Queso", "category": "frita", "price": 2000, "stock": 40, "image": f"{base_img}/queso.jpg"},
@@ -30,12 +29,9 @@ async def lifespan(app: FastAPI):
         ]
         products_collection.insert_many(initials)
         logger.info("Base de datos poblada con imágenes locales")
-    
-    logger.info("Base de datos verificada y lista")
-    
-    yield # Aquí es donde la aplicación corre
-    
-    # LÓGICA DE APAGADO (Opcional: cerrar conexiones, etc.)
+
+    logger.info("Sistema iniciado correctamente")
+    yield
     logger.info("Apagando aplicación...")
 
 app = FastAPI(

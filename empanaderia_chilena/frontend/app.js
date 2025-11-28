@@ -164,12 +164,18 @@ function renderGrid(categoryFilter = 'all') {
     });
 }
 
-// Helper para generar el HTML de la tarjeta (para no repetir código)
-// Helper para generar el HTML de la tarjeta (DISEÑO APP MÓVIL)
 function createCardHTML(p) {
-    const imgUrl = p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000/static/images/${p.image}`;
+    let imgUrl = p.image;
+    if (!imgUrl.startsWith('http')) {
+        if (imgUrl.startsWith('/')) {
+            imgUrl = `${API}${imgUrl}`; 
+        } else {
+            imgUrl = `${API}/static/images/${imgUrl}`;
+        }
+    }
+
     const hasStock = p.stock > 0;
-    
+
     return `
         <div class="card-img">
             <span class="badge ${p.category}">${p.category}</span>
@@ -177,7 +183,6 @@ function createCardHTML(p) {
         </div>
         <div class="card-info">
             <h3>${p.name}</h3>
-            
             <div class="card-footer">
                 <div class="price-info">
                     <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>

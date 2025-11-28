@@ -14,10 +14,9 @@ def register(user: User):
 
     if users_collection.users.find_one({"email": user.email}):
         raise HTTPException(400, "El usuario ya existe")
-    
+
     user_dict = user.model_dump()
     user_dict["password"] = get_password_hash(user.password)
-    # Lógica simple de roles: si contiene "admin", es admin (Solo para dev/demo)
     user_dict["role"] = "admin" if "admin" in user.email else "cliente"
     
     users_collection.users.insert_one(user_dict)
@@ -32,11 +31,10 @@ def login(request: Request, creds: LoginRequest):
 
     if not user or not verify_password(creds.password, user["password"]):
         raise HTTPException(401, "Credenciales inválidas")
-    
+
     token = create_token({"sub": user["email"], "role": user["role"], "name": user["name"]})
     return {
         "access_token": token, 
         "token_type": "bearer",
         "user": {"name": user["name"], "email": user["email"], "role": user["role"]}
     }
-    
