@@ -1,37 +1,34 @@
-const API_PORT = 8000;
-const API_HOST = window.location.hostname;
-const API = `http://${API_HOST}:${API_PORT}`; 
+const API = `http://$192.168.1.117:8000`; 
 
 console.log(`📡 Conectando a: ${API}`);
 
 let state = { user: null, token: null, products: [], cart: [] };
+let carouselInterval;
 
 document.addEventListener("DOMContentLoaded", async () => {
-
-    document.getElementById("full-grid-view").classList.add("hidden");
-    const adminPanel = document.getElementById("admin-panel");
-    if(adminPanel) adminPanel.classList.add("hidden");
-
     loadSession();
     loadCartFromStorage();
     renderCart();
+    renderSkeletons();
 
-    try {
-        state.products = await api("/products");
-        renderHome();
-    } catch (e) {
-        console.error("Error cargando productos iniciales:", e);
-    }
+    await loadProducts();
 
     const searchInput = document.getElementById("search");
     if(searchInput) {
-        searchInput.value = ""; 
         searchInput.addEventListener("keyup", (e) => {
             if(e.target.value.length > 0) renderGrid();
             else showHome();
         });
     }
 });
+
+function renderSkeletons() {
+    const container = document.getElementById("home-view");
+    if(!container) return;
+    container.innerHTML = '<div class="shelf-container" style="overflow:hidden;">' + 
+        Array(4).fill('<div class="card-skeleton"><div class="skeleton sk-img"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line" style="width:60%"></div><div class="skeleton sk-btn"></div></div>').join('') + 
+        '</div>';
+}
 
 async function api(endpoint, method="GET", body=null) {
     const headers = { "Content-Type": "application/json" };
@@ -60,40 +57,22 @@ async function loadProducts() {
     try {
         state.products = await api("/products");
         renderHome();
-        initCarousel();
-    } catch (e) { 
+        initCarousel(); 
+    } catch (e) {
         console.error(e);
-        toast("Error conectando con el servidor.", "error"); 
     }
 }
 
-function createCardHTML(p) {
-    let imgUrl = p.image;
-
-    if (imgUrl.startsWith('/')) {
-        imgUrl = `${API}${imgUrl}`;
-    } else if (!imgUrl.startsWith('http')) {
-        imgUrl = `${API}/static/images/${imgUrl}`;
-    }
-
-    const hasStock = p.stock > 0;
-    
+function createSlideHTML(p) {
+    let img = p.image.startsWith('http') ? p.image : `${API}${p.image}`;
     return `
-        <div class="card-img">
-            <span class="badge ${p.category}">${p.category}</span>
-            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Foto'" loading="lazy" alt="${p.name}">
-        </div>
-        <div class="card-info">
-            <h3>${p.name}</h3>
-            <div class="card-footer">
-                <div class="price-info">
-                    <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
-                </div>
-                <button class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
-                    onclick="${hasStock ? `addToCart(${p.id})` : ''}">
-                    ${hasStock ? '+' : '×'}
-                </button>
+        <div class="carousel-slide" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+            <div class="slide-content">
+                <span class="badge ${p.category}" style="position:static; display:inline-block; margin-bottom:5px;">${p.category}</span>
+                <h2>${p.name}</h2>
+                <button class="btn-primary" onclick="addToCart(${p.id})" style="width:auto; padding:8px 20px;">Ver</button>
             </div>
+            <img src="${img}" class="slide-img">
         </div>
     `;
 }
@@ -191,33 +170,45 @@ function renderGrid(categoryFilter = 'all') {
     });
 }
 
-let carouselInterval;
+
 let currentSlide = 1;
 
 function initCarousel() {
     const track = document.getElementById("carousel-track");
     const container = document.getElementById("hero-carousel");
-
-    const featured = state.products.filter(p => p.stock > 0 && p.image).slice(0, 5);
+    
+    // Filtrar productos con imagen válida
+    const featured = state.products.filter(p => p.stock > 0 && p.image && !p.image.includes("placeholder")).slice(0, 5);
     
     if (featured.length === 0 || !track) return;
+    
     container.classList.remove("hidden");
+    container.classList.add("active");
 
-    const slidesHTML = featured.map(p => buildSlideHTML(p)).join('');
-    const firstClone = buildSlideHTML(featured[0]);
-    const lastClone = buildSlideHTML(featured[featured.length - 1]);
+    // Crear clones para efecto infinito
+    const firstSlide = createSlideHTML(featured[0]);
+    const lastSlide = createSlideHTML(featured[featured.length - 1]);
+    const allSlides = featured.map(p => createSlideHTML(p)).join('');
 
-    track.innerHTML = lastClone + slidesHTML + firstClone;
+    track.innerHTML = lastSlide + allSlides + firstSlide;
+    track.style.transform = "translateX(-100%)"; // Posicionar en el primer elemento real
 
-    track.style.transform = `translateX(-100%)`;
+    let index = 1;
+    
+    clearInterval(carouselInterval);
+    carouselInterval = setInterval(() => {
+        index++;
+        track.style.transition = "transform 0.5s ease-in-out";
+        track.style.transform = `translateX(-${index * 100}%)`;
 
-    // Dots
-    const dotsContainer = document.getElementById("carousel-dots");
-    dotsContainer.innerHTML = featured.map((_, i) => 
-        `<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`
-    ).join('');
-
-    startCarouselLoop(featured.length);
+        track.addEventListener('transitionend', () => {
+            if (index >= featured.length + 1) {
+                track.style.transition = "none";
+                index = 1;
+                track.style.transform = `translateX(-100%)`;
+            }
+        }, {once: true});
+    }, 3500);
 }
 
 function buildSlideHTML(p) {
@@ -275,6 +266,26 @@ function moveSlide(direction) {
     if (currentSlide >= totalSlides) currentSlide = 0;
     updateCarousel();
     resetAutoSlide();
+}
+
+function createCardHTML(p) {
+    let imgUrl = p.image;
+    if (imgUrl.startsWith('/')) imgUrl = `${API}${imgUrl}`;
+    else if (!imgUrl.startsWith('http')) imgUrl = `${API}/static/images/${imgUrl}`;
+
+    return `
+        <div class="card-img">
+            <span class="badge ${p.category}">${p.category}</span>
+            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" loading="lazy">
+        </div>
+        <div class="card-info">
+            <h3>${p.name}</h3>
+            <div class="card-footer">
+                <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
+                <button class="btn-add-mini ${p.stock <= 0 ? 'disabled' : ''}" onclick="addToCart(${p.id})">+</button>
+            </div>
+        </div>
+    `;
 }
 
 let tempQty = 1;
@@ -409,8 +420,7 @@ function openCheckout() {
 function toggleCart() {
     const cart = document.getElementById("cart-sidebar");
     const overlay = document.getElementById("cart-overlay");
-    
-    // Usamos toggle para añadir/quitar la clase 'open' que definimos en CSS
+
     if (cart.classList.contains("open")) {
         cart.classList.remove("open");
         if(overlay) overlay.style.display = "none";
@@ -469,29 +479,14 @@ async function openOrderHistory() {
 
 function toggleAdminPanel() {
     const admin = document.getElementById("admin-panel");
-    const mainApp = document.querySelector(".main-wrapper");
-    const header = document.querySelector("header");
-    const bottomNav = document.querySelector(".bottom-nav");
-
-    const isOpen = admin.classList.contains("open");
-
-    if (isOpen) {
+    const mainWrapper = document.querySelector(".main-wrapper");
+    
+    if (admin.classList.contains("open")) {
         admin.classList.remove("open");
-        setTimeout(() => admin.classList.add("hidden"), 300);
-        
-        mainApp.classList.remove("hidden");
-        if(header) header.classList.remove("hidden");
-        if(bottomNav) bottomNav.classList.remove("hidden");
-
+        mainWrapper.style.display = "block";
     } else {
-        admin.classList.remove("hidden");
-
-        setTimeout(() => admin.classList.add("open"), 10);
-        
-        mainApp.classList.add("hidden");
-        if(header) header.classList.add("hidden");
-        if(bottomNav) bottomNav.classList.add("hidden");
-
+        admin.classList.add("open");
+        mainWrapper.style.display = "none";
         loadAdminTable();
     }
 }
