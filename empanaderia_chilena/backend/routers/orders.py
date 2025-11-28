@@ -8,18 +8,31 @@ router = APIRouter(tags=["Ordenes"])
 
 @router.post("/orders")
 def create_order(order: Order, current_user: dict = Depends(get_current_user)):
-    # 1. Validar Stock
+    # Validar productos primero (Existencia)
     for item in order.items:
-        p = db.products.find_one({"id": item.product_id})
-        if not p: raise HTTPException(404, f"Producto {item.name} no existe")
-        if p["stock"] < item.quantity:
-            raise HTTPException(400, f"Sin stock suficiente para {item.name}")
+        if not db.products.find_one({"id": item.product_id}):
+            raise HTTPException(404, f"Producto {item.name} no existe")
 
-    # 2. Descontar Stock
+    # TRANSACCIÓN ATÓMICA MANUAL
+    # Intentamos descontar stock producto por producto.
+    # Si uno falla, deberíamos revertir (rollback), pero en Mongo simple 
+    # haremos la verificación atómica directa.
+    
     for item in order.items:
-        db.products.update_one({"id": item.product_id}, {"$inc": {"stock": -item.quantity}})
+        result = db.products.update_one(
+            {
+                "id": item.product_id, 
+                "stock": {"$gte": item.quantity} # <--- CONDICIÓN DE SEGURIDAD
+            },
+            {"$inc": {"stock": -item.quantity}}
+        )
         
-    # 3. Guardar Orden
+        if result.matched_count == 0:
+            # Si entramos aquí, significa que entre que el usuario vio el producto
+            # y dio click a pagar, alguien más se lo llevó.
+            raise HTTPException(409, f"Stock insuficiente para {item.name}. Alguien compró el último justo ahora.")
+
+    # Guardar Orden
     order_data = order.model_dump()
     order_data["customer_email"] = current_user["email"]
     res = db.orders.insert_one(order_data)

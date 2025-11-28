@@ -82,7 +82,15 @@
                 </select>
                 <input class="input-field" type="number" id="adm-price" placeholder="Precio">
                 <input class="input-field" type="number" id="adm-stock" placeholder="Stock Inicial">
-                <input class="input-field" type="text" id="adm-img" placeholder="URL Imagen">
+                <div style="grid-column: span 2; display: flex; gap: 10px; align-items: center;">
+                    <div style="flex: 1;">
+                        <label for="adm-file" style="cursor: pointer; display: block; padding: 10px; border: 2px dashed #ccc; text-align: center; border-radius: 8px; color: #666;">
+                            📂 Subir Imagen
+                        </label>
+                        <input type="file" id="adm-file" style="display: none;" onchange="handleFileUpload(this)">
+                        <input type="hidden" id="adm-img-url"> </div>
+                    <img id="preview-img" src="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; display: none; border: 1px solid #ddd;">
+                </div>
                 <button class="btn-primary" onclick="saveProduct()">Guardar</button>
                 <button class="btn-secondary" onclick="clearForm()">Limpiar</button>
             </div>

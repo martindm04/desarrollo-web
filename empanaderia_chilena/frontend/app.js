@@ -540,6 +540,53 @@ function renderAdminOrdersTable(orders) {
     });
 }
 
+async function handleFileUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // Feedback visual de carga
+    const label = input.previousElementSibling; // El label "Subir Imagen"
+    const originalText = label.innerText;
+    label.innerText = "⏳ Subiendo...";
+    label.style.background = "#f7fafc";
+
+    try {
+        // Hacemos la petición POST al nuevo endpoint
+        // Nota: fetch con FormData no necesita Content-Type header manual, el navegador lo pone
+        const res = await fetch(`${API}/upload`, {
+            method: "POST",
+            body: formData
+            // No enviamos headers de auth aquí por simplicidad, 
+            // pero deberías agregarlos si proteges la ruta /upload
+        });
+
+        if (!res.ok) throw new Error("Error subiendo");
+        
+        const data = await res.json();
+        
+        // Guardamos la URL recibida en el input oculto
+        document.getElementById("adm-img-url").value = data.url;
+        
+        // Mostrar preview
+        const preview = document.getElementById("preview-img");
+        preview.src = data.url;
+        preview.style.display = "block";
+        
+        toast("Imagen subida correctamente", "success");
+        label.innerText = "✅ Listo";
+
+    } catch (e) {
+        console.error(e);
+        toast("Error al subir imagen", "error");
+        label.innerText = "❌ Error";
+    } finally {
+        setTimeout(() => label.innerText = originalText, 2000);
+    }
+}
+
 // Función auxiliar para colores
 function getStatusColor(status) {
     switch(status) {
@@ -598,7 +645,7 @@ async function saveProduct() {
     const cat = document.getElementById("adm-cat").value;
     const price = parseInt(document.getElementById("adm-price").value);
     const stock = parseInt(document.getElementById("adm-stock").value);
-    const img = document.getElementById("adm-img").value;
+    const img = document.getElementById("adm-img-url").value || "https://via.placeholder.com/150";
 
     if (!id || !name || !price) return toast("Faltan datos obligatorios", "error");
 

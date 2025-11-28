@@ -11,3 +11,4 @@ python-dotenv
 aiofiles
 slowapi
 pytest
+python-multipart
