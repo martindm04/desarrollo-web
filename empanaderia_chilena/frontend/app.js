@@ -852,12 +852,14 @@ function nextFocus(event, nextId) {
     }
 }
 
-function saveSession() { localStorage.setItem("dw_sess", JSON.stringify({u:state.user, t:state.token})); }
+function saveSession() { localStorage.setItem("dw_sess", JSON.stringify({ u: state.user, t: state.token })); }
+
 function loadSession() { 
     const s = JSON.parse(localStorage.getItem("dw_sess")); 
     if(s) { state.user=s.u; state.token=s.t; updateAuthUI(); } 
 }
 function saveCart() { localStorage.setItem("dw_cart", JSON.stringify(state.cart)); }
+
 function loadCartFromStorage() { 
     const c = JSON.parse(localStorage.getItem("dw_cart")); 
     if(c) { state.cart=c; } 
