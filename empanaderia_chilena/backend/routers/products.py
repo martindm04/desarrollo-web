@@ -56,6 +56,22 @@ def add_prod(p: Product):
     products_collection.insert_one(p.model_dump())
     return {"message": "Producto creado"}
 
+@router.put("/products/{pid}", dependencies=[Depends(get_admin)])
+def update_product(pid: int, product_update: Product):
+    # Convertimos a dict excluyendo nulos por si acaso
+    update_data = product_update.model_dump()
+    
+    # Buscamos y actualizamos
+    result = products_collection.update_one(
+        {"id": pid},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(404, "Producto no encontrado")
+        
+    return {"message": "Producto actualizado correctamente"}
+
 @router.delete("/products/{pid}", dependencies=[Depends(get_admin)])
 def del_prod(pid: int):
     res = products_collection.delete_one({"id": pid})

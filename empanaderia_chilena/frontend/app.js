@@ -1,5 +1,6 @@
 const API = "http://127.0.0.1:8000";
 let state = { user: null, token: null, products: [], cart: [] };
+let isEditingId = null;
 
 // --- INICIO ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -587,6 +588,36 @@ async function handleFileUpload(input) {
     }
 }
 
+function editProduct(id) {
+    const p = state.products.find(x => x.id === id);
+    if (!p) return;
+
+    // 1. Cambiar estado a "Editando"
+    isEditingId = id;
+
+    // 2. Llenar el formulario
+    document.getElementById("adm-id").value = p.id;
+    document.getElementById("adm-id").disabled = true; // No permitir cambiar ID al editar
+    document.getElementById("adm-name").value = p.name;
+    document.getElementById("adm-cat").value = p.category;
+    document.getElementById("adm-price").value = p.price;
+    document.getElementById("adm-stock").value = p.stock;
+
+    // 3. Manejar la imagen
+    document.getElementById("adm-img-url").value = p.image;
+    const preview = document.getElementById("preview-img");
+    preview.src = p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000/static/images/${p.image}`;
+    preview.style.display = "block";
+
+    // 4. Cambiar texto del botón y hacer scroll al form
+    const btn = document.querySelector("button[onclick='saveProduct()']");
+    btn.innerText = "💾 Guardar Cambios";
+    btn.classList.replace("btn-primary", "btn-warning"); // Opcional: cambiar color si tienes esa clase
+
+    document.getElementById("admin-panel").scrollIntoView({ behavior: 'smooth' });
+    toast(`Editando: ${p.name}`, "info");
+}
+
 // Función auxiliar para colores
 function getStatusColor(status) {
     switch(status) {
@@ -630,8 +661,11 @@ async function loadAdminTable() {
                 <td>$${p.price.toLocaleString('es-CL')}</td>
                 <td style="font-weight:bold; color:${p.stock < 10 ? 'red' : 'green'}">${p.stock}</td>
                 <td>
-                    <button class="btn-primary" style="padding:5px 10px; font-size:0.8rem;" onclick="addStock(${p.id})">+ Stock</button>
-                    <button class="btn-secondary" style="padding:5px 10px; font-size:0.8rem; background:#e53e3e; color:white;" onclick="deleteProduct(${p.id})">🗑️</button>
+                    <button class="btn-primary" style="padding:5px 10px;" onclick="addStock(${p.id})">+ Stock</button>
+                    
+                    <button class="btn-secondary" style="padding:5px 10px; background:#ecc94b; color:black;" onclick="editProduct(${p.id})">✏️</button>
+                    
+                    <button class="btn-secondary" style="padding:5px 10px; background:#e53e3e; color:white;" onclick="deleteProduct(${p.id})">🗑️</button>
                 </td>
             </tr>
         `;
@@ -645,19 +679,29 @@ async function saveProduct() {
     const cat = document.getElementById("adm-cat").value;
     const price = parseInt(document.getElementById("adm-price").value);
     const stock = parseInt(document.getElementById("adm-stock").value);
+    // Usamos la URL del input oculto o un placeholder
     const img = document.getElementById("adm-img-url").value || "https://via.placeholder.com/150";
 
     if (!id || !name || !price) return toast("Faltan datos obligatorios", "error");
 
-    const product = { id, name, category: cat, price, stock, image: img || "https://via.placeholder.com/150" };
+    const productData = { id, name, category: cat, price, stock, image: img };
 
     try {
-        await api("/products", "POST", product);
-        toast("Producto creado correctamente", "success");
-        clearForm();
-        loadAdminTable();
+        if (isEditingId) {
+            // --- MODO EDICIÓN (PUT) ---
+            await api(`/products/${isEditingId}`, "PUT", productData);
+            toast("Producto actualizado correctamente", "success");
+        } else {
+            // --- MODO CREACIÓN (POST) ---
+            await api("/products", "POST", productData);
+            toast("Producto creado correctamente", "success");
+        }
+
+        clearForm();     // Limpiar
+        loadAdminTable(); // Recargar tabla
+
     } catch (e) {
-        toast(e.message || "Error al crear producto (¿ID repetido?)", "error");
+        toast(e.message || "Error al guardar producto", "error");
     }
 }
 
@@ -690,6 +734,13 @@ function clearForm() {
         label.innerText = "📂 Subir Imagen";
         label.style.background = "";
     }
+        // Resetear estado de edición
+    isEditingId = null;
+        document.getElementById("adm-id").disabled = false; // Liberar ID
+
+        // Restaurar botón
+        const btn = document.querySelector("button[onclick='saveProduct()']");
+        if(btn) btn.innerText = "Guardar Nuevo";
 }
 
 // Variable temporal para saber qué producto estamos editando
