@@ -1,4 +1,9 @@
-const API = "http://127.0.0.1:8000";
+const API_PORT = 8000;
+const API_HOST = window.location.hostname; 
+const API = `http://${API_HOST}:${API_PORT}`;
+
+console.log(`📡 Conectando a la API en: ${API}`);
+
 let state = { user: null, token: null, products: [], cart: [] };
 let isEditingId = null;
 let currentSlide = 0;
@@ -373,6 +378,20 @@ function openCheckout() {
 
     toggleCart(); 
     openModal("checkout-modal");
+}
+
+function toggleCart() {
+    const cart = document.getElementById("cart-sidebar");
+    const overlay = document.getElementById("cart-overlay");
+    
+    // Usamos toggle para añadir/quitar la clase 'open' que definimos en CSS
+    if (cart.classList.contains("open")) {
+        cart.classList.remove("open");
+        if(overlay) overlay.style.display = "none";
+    } else {
+        cart.classList.add("open");
+        if(overlay) overlay.style.display = "block";
+    }
 }
 
 async function processPayment() {
