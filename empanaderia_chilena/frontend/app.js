@@ -1,4 +1,6 @@
-const API = "http://127.0.0.1:8000"; // CORRECCIÓN: Puerto del Backend, no de Mongo
+// CORRECCIÓN CRÍTICA: Apuntar al Backend (FastAPI), no a la Base de Datos
+const API = "http://127.0.0.1:8000"; 
+
 console.log(`📡 Conectando a la API: ${API}`);
 
 let state = { user: null, token: null, products: [], cart: [] };
@@ -27,16 +29,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// --- API CLIENT ---
+// --- API CLIENT (Manejo de Errores Mejorado) ---
 async function api(endpoint, method="GET", body=null) {
     const headers = { "Content-Type": "application/json" };
     if (state.token) headers["Authorization"] = `Bearer ${state.token}`;
     
     try {
-        // Aseguramos que la URL esté bien formada
         const url = `${API}${endpoint}`;
-        console.log(`📞 Fetching: ${url}`); // Debug para ver en consola
-
         const res = await fetch(url, {
             method, headers, body: body ? JSON.stringify(body) : null
         });
@@ -76,7 +75,6 @@ function createCardHTML(p) {
         // Si viene con barra al inicio, la quitamos para evitar dobles barras si API ya tiene
         const cleanPath = imgUrl.startsWith('/') ? imgUrl.substring(1) : imgUrl;
         // Si la ruta ya incluye 'static', no lo repetimos si API no lo tiene
-        // Asumimos que API es la base (http://localhost:8000) y el path es static/images/...
         imgUrl = `${API}/${cleanPath}`;
     }
 
@@ -198,11 +196,12 @@ function renderGrid(filterCat = 'all') {
 
     filtered.forEach(p => {
         // Reutilizamos el estilo de tarjeta pero en wrapper grid
-        // Nota: createCardHTML devuelve un string con la clase 'card'. 
-        // En el CSS .grid .card tiene estilos específicos para adaptarse.
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = createCardHTML(p);
-        grid.appendChild(tempDiv.firstElementChild);
+        // Adaptar estilo para grid si es necesario
+        const card = tempDiv.firstElementChild;
+        card.style.width = "100%"; 
+        grid.appendChild(card);
     });
 }
 
@@ -229,7 +228,12 @@ function initCarousel() {
     
     // Construir slides
     track.innerHTML = featured.map(p => {
-        let img = p.image.startsWith('http') ? p.image : `${API}${p.image.startsWith('/')?'':'/'}${p.image}`;
+        let img = p.image;
+        if (!img.startsWith('http')) {
+            const cleanPath = img.startsWith('/') ? img.substring(1) : img;
+            img = `${API}/${cleanPath}`;
+        }
+        
         return `
             <div class="carousel-slide" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                 <div class="slide-content">
@@ -276,7 +280,8 @@ function addToCart(id) {
     
     let imgUrl = p.image;
     if (!imgUrl.startsWith('http')) {
-        imgUrl = `${API}${imgUrl.startsWith('/')?'':'/'}${imgUrl}`;
+        const cleanPath = imgUrl.startsWith('/') ? imgUrl.substring(1) : imgUrl;
+        imgUrl = `${API}/${cleanPath}`;
     }
     document.getElementById("qty-prod-img").src = imgUrl;
     
@@ -515,7 +520,12 @@ async function loadAdminTable() {
         tbody.innerHTML = "";
         state.products.forEach(p => {
             const tr = document.createElement("tr");
-            let img = p.image.startsWith('http') ? p.image : `${API}${p.image.startsWith('/')?'':'/'}${p.image}`;
+            
+            let img = p.image;
+            if (!img.startsWith('http')) {
+                const cleanPath = img.startsWith('/') ? img.substring(1) : img;
+                img = `${API}/${cleanPath}`;
+            }
             
             tr.innerHTML = `
                 <td><img src="${img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;"></td>
@@ -561,8 +571,12 @@ function editProduct(id) {
     
     const preview = document.getElementById("preview-img");
     if(preview) {
-        let imgUrl = p.image.startsWith('http') ? p.image : `${API}${p.image.startsWith('/')?'':'/'}${p.image}`;
-        preview.src = imgUrl;
+        let img = p.image;
+        if (!img.startsWith('http')) {
+            const cleanPath = img.startsWith('/') ? img.substring(1) : img;
+            img = `${API}/${cleanPath}`;
+        }
+        preview.src = img;
         preview.style.display = "block";
     }
     
@@ -635,7 +649,8 @@ async function handleFileUpload(input) {
         
         const preview = document.getElementById("preview-img");
         if(preview) {
-            preview.src = `${API}${data.url}`;
+            const cleanPath = data.url.startsWith('/') ? data.url.substring(1) : data.url;
+            preview.src = `${API}/${cleanPath}`;
             preview.style.display = "block";
         }
         toast("Imagen lista", "success");
