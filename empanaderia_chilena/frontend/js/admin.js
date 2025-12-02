@@ -5,6 +5,7 @@ import { toast, openModal, closeModal } from './utils.js';
 import { loadProducts } from './products.js';
 
 let isEditingId = null;
+let salesChartInstance = null;
 
 export function initAdmin() {
     window.toggleAdminPanel = toggleAdminPanel;
@@ -87,6 +88,9 @@ async function loadSalesMetrics() {
         document.getElementById("kpi-count").innerText = orders.length;
 
         renderAdminOrdersTable(orders);
+        renderSalesChart(orders);
+        renderAdminOrdersTable(orders);
+
     } catch (e) { console.error(e); }
 }
 
@@ -233,4 +237,41 @@ function editProduct(id) {
 async function changeOrderStatus(id, status) {
     try { await api(`/orders/${id}/status`, "PATCH", { status }); toast("Estado actualizado"); }
     catch(e) { toast("Error", "error"); }
+}
+
+function renderSalesChart(orders) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const statusCounts = orders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+    }, {});
+    
+    const labels = Object.keys(statusCounts);
+    const data = Object.values(statusCounts);
+
+    if (salesChartInstance) salesChartInstance.destroy();
+    
+    salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '# de Pedidos por Estado',
+                data: data,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)', 
+                    'rgba(54, 162, 235, 0.7)', 
+                    'rgba(255, 206, 86, 0.7)', 
+                    'rgba(75, 192, 192, 0.7)'  
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+        }
+    });
 }

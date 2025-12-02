@@ -9,8 +9,7 @@
 body { 
     background-color: var(--bg-body); 
     color: var(--text-main); 
-    padding-bottom: 80px; 
-    /* Patrón de fondo sutil */
+    padding-bottom: 80px;
     background-image: radial-gradient(#cbd5e0 1px, transparent 1px);
     background-size: 20px 20px;
     min-height: 100vh;
@@ -24,9 +23,14 @@ body {
 
 .hidden { display: none !important; }
 
-/* Empty State */
 #empty-state { 
     text-align:center; 
     padding: 4rem; 
     color: var(--text-light); 
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }

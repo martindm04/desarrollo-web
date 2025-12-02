@@ -15,7 +15,7 @@
 
 .admin-form { 
     background: var(--white); padding: 20px; border-radius: 12px; margin-bottom: 20px; 
-    box-shadow: var(--shadow); display: grid; gap: 15px;
+    box-shadow: var(--shadow); display: grid; gap: 15px; max-width: 450px;
 }
 
 .form-row { display: flex; gap: 10px; }

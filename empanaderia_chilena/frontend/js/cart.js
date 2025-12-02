@@ -18,6 +18,7 @@ export function initCart() {
     window.toggleCart = toggleCart;
     window.openCheckout = openCheckout;
     window.processPayment = processPayment;
+    window.addToCart = addToCart;
 }
 
 function loadCartFromStorage() { 

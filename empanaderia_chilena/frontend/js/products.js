@@ -33,23 +33,25 @@ function createCardHTML(p) {
     const hasStock = p.stock > 0;
 
     return `
-        <div class="card-img">
-            <span class="badge ${p.category}">${p.category}</span>
-            <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" loading="lazy" alt="${p.name}">
-        </div>
-        <div class="card-info">
-            <h3>${p.name}</h3>
-            <div class="card-footer">
-                <div class="price-info">
-                    <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
-                    <small style="font-size:0.7rem; color:${hasStock ? '#718096' : '#e53e3e'}">
-                        ${hasStock ? 'Disponible' : 'Agotado'}
-                    </small>
+        <div class="card">
+            <div class="card-img">
+                <span class="badge ${p.category}">${p.category}</span>
+                <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" loading="lazy" alt="${p.name}">
+            </div>
+            <div class="card-info">
+                <h3>${p.name}</h3>
+                <div class="card-footer">
+                    <div class="price-info">
+                        <div class="price-tag">$${p.price.toLocaleString('es-CL')}</div>
+                        <small style="font-size:0.7rem; color:${hasStock ? '#718096' : '#e53e3e'}">
+                            ${hasStock ? 'Disponible' : 'Agotado'}
+                        </small>
+                    </div>
+                    <button class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
+                        onclick="${hasStock ? `addToCart(${p.id})` : ''}">
+                        ${hasStock ? '+' : '×'}
+                    </button>
                 </div>
-                <button class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
-                    onclick="${hasStock ? `addToCart(${p.id})` : ''}">
-                    ${hasStock ? '+' : '×'}
-                </button>
             </div>
         </div>
     `;
@@ -132,7 +134,7 @@ function renderGrid(filterCat = 'all') {
     filtered.forEach(p => {
         const wrapper = document.createElement('div');
         wrapper.className = 'card-wrapper'; 
-        wrapper.innerHTML = createCardHTML(p);
+        wrapper.innerHTML += createCardHTML(p);
         grid.appendChild(wrapper);
     });
 }

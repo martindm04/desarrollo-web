@@ -28,4 +28,14 @@
 .qty-control-mini { 
     display: flex; align-items: center; gap: 10px; background: #edf2f7; padding: 2px 8px; border-radius: 12px; 
 }
-.qty-control-mini button { border: none; background: none; font-weight: bold; font-size: 1.2rem; width: 20px; cursor: pointer; }
+
+.qty-control-mini button { 
+    border: none; 
+    background: none; 
+    font-weight: bold; 
+    font-size: 1.2rem; 
+    width: 20px; 
+    cursor: pointer; 
+    line-height: 1;
+    padding: 0;
+}
