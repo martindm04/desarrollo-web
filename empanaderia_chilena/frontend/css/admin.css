@@ -1,0 +1,33 @@
+.admin-container { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: #f8f9fa; z-index: 3000; padding: 20px; overflow-y: auto; display: none; 
+}
+.admin-container.open { display: block; }
+
+.admin-navbar { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+
+.admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; }
+.tab-btn { 
+    padding: 8px 16px; background: var(--white); border: 1px solid #e2e8f0; 
+    border-radius: 20px; white-space: nowrap; cursor: pointer; 
+}
+.tab-btn.active { background: var(--text-main); color: var(--white); border-color: var(--text-main); }
+
+.admin-form { 
+    background: var(--white); padding: 20px; border-radius: 12px; margin-bottom: 20px; 
+    box-shadow: var(--shadow); display: grid; gap: 15px;
+}
+
+.form-row { display: flex; gap: 10px; }
+
+.admin-table { 
+    width: 100%; border-collapse: collapse; background: var(--white); font-size: 0.9rem; 
+    border-radius: 8px; overflow: hidden; box-shadow: var(--shadow);
+}
+.admin-table th { text-align: left; padding: 12px; background: var(--text-main); color: var(--white); }
+.admin-table td { padding: 12px; border-bottom: 1px solid #edf2f7; }
+
+.kpi-box { 
+    display: flex; gap: 20px; margin-bottom: 20px; background: var(--white); 
+    padding: 15px; border-radius: 10px; box-shadow: var(--shadow); 
+}

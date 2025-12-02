@@ -5,7 +5,6 @@ import { toast, openModal, closeModal } from './utils.js';
 import { loadProducts } from './products.js';
 
 let isEditingId = null;
-let salesChartInstance = null;
 
 export function initAdmin() {
     window.toggleAdminPanel = toggleAdminPanel;

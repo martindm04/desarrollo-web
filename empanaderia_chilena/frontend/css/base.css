@@ -1,0 +1,32 @@
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Segoe UI', system-ui, sans-serif; 
+    -webkit-tap-highlight-color: transparent; 
+}
+
+body { 
+    background-color: var(--bg-body); 
+    color: var(--text-main); 
+    padding-bottom: 80px; 
+    /* Patrón de fondo sutil */
+    background-image: radial-gradient(#cbd5e0 1px, transparent 1px);
+    background-size: 20px 20px;
+    min-height: 100vh;
+}
+
+.main-wrapper {
+    max-width: 1200px; 
+    margin: 0 auto; 
+    width: 100%;
+}
+
+.hidden { display: none !important; }
+
+/* Empty State */
+#empty-state { 
+    text-align:center; 
+    padding: 4rem; 
+    color: var(--text-light); 
+}

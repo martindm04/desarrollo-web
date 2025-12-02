@@ -109,6 +109,23 @@
             <h3>Total: <span id="kpi-total">$0</span></h3>
             <h3>Pedidos: <span id="kpi-count">0</span></h3>
         </div>
+
+        <h3 style="margin-top: 30px; margin-bottom: 10px;">Últimas Órdenes</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="admin-orders-table">
+                <tr><td colspan="5" style="text-align:center;">Cargando órdenes...</td></tr>
+            </tbody>
+        </table>
+        
         <canvas id="salesChart" style="margin-top:20px;"></canvas>
     </div>
 </section>

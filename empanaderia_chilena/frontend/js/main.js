@@ -9,6 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initCart();
     initProducts();
     initAdmin();
-    
+
     document.addEventListener("keydown", e => { if(e.key === "Escape") closeModals(); });
 });

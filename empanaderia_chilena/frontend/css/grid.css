@@ -1,0 +1,28 @@
+/* CABECERA DE GRILLA */
+.grid-header {
+    display: flex; 
+    align-items: center; 
+    gap: 20px; 
+    padding: 20px;
+}
+
+.grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+    gap: 15px; 
+    padding: 0 20px 20px; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
+
+/* En la grilla, la tarjeta se adapta al ancho de la columna */
+.grid .card { 
+    width: 100%; 
+    min-width: 0; 
+    height: auto; 
+    max-width: none;
+}
+
+@media(min-width: 768px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+}
