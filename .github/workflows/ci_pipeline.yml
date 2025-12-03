@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # Levantamos un MongoDB temporal para las pruebas
       mongodb:
         image: mongo:latest
         ports:
@@ -34,8 +33,7 @@ jobs:
 
     - name: Run Unit Tests (Pytest)
       env:
-        # Configurar variable para que conecte al Mongo del servicio
         MONGODB_URI: mongodb://localhost:27017 
       run: |
-        cd backend
+        cd .\empanaderia_chilena\backend\
         pytest tests/test_app.py
