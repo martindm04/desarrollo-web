@@ -4,6 +4,7 @@ import { API_URL } from './config.js';
 import { renderSkeletons } from './utils.js';
 
 let carouselInterval = null;
+let currentSlide = 0;
 
 export function initProducts() {
     renderSkeletons();
@@ -11,6 +12,8 @@ export function initProducts() {
 
     window.showFullCatalog = showFullCatalog;
     window.showHome = showHome;
+    window.moveCarousel = moveCarousel;
+    window.setSlide = setSlide;
 }
 
 export async function loadProducts() {
@@ -30,13 +33,14 @@ function createCardHTML(p) {
     if (!imgUrl.startsWith('http')) {
         imgUrl = imgUrl.startsWith('/') ? `${API_URL}${imgUrl}` : `${API_URL}/static/images/${imgUrl}`;
     }
+
     const hasStock = p.stock > 0;
 
     return `
         <div class="card">
             <div class="card-img">
                 <span class="badge ${p.category}">${p.category}</span>
-                <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150'" loading="lazy" alt="${p.name}">
+                <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Error'" loading="lazy" alt="${p.name}">
             </div>
             <div class="card-info">
                 <h3>${p.name}</h3>
@@ -91,13 +95,6 @@ function renderHome() {
         }
     });
 
-    container.innerHTML += `
-        <div style="text-align:center; margin: 30px 0; padding-bottom: 40px;">
-            <button class="btn-floating-all" onclick="showFullCatalog('all')">
-                Ver Menú Completo
-            </button>
-        </div>
-    `;
 }
 
 function showFullCatalog(filterCat = 'all') {
@@ -105,6 +102,9 @@ function showFullCatalog(filterCat = 'all') {
     const fullGrid = document.getElementById("full-grid-view");
     fullGrid.classList.remove("hidden");
     
+    const carousel = document.getElementById("hero-carousel");
+    if(carousel) carousel.classList.add("hidden");
+
     const title = document.getElementById("grid-title");
     if(title) title.innerText = filterCat === 'all' ? "Todo el Menú" : filterCat.toUpperCase();
 
@@ -115,6 +115,10 @@ function showFullCatalog(filterCat = 'all') {
 function showHome() {
     document.getElementById("full-grid-view").classList.add("hidden");
     document.getElementById("home-view").classList.remove("hidden");
+    
+    const carousel = document.getElementById("hero-carousel");
+    if(carousel) carousel.classList.remove("hidden");
+
     window.scrollTo(0,0);
 }
 
@@ -134,7 +138,7 @@ function renderGrid(filterCat = 'all') {
     filtered.forEach(p => {
         const wrapper = document.createElement('div');
         wrapper.className = 'card-wrapper'; 
-        wrapper.innerHTML += createCardHTML(p);
+        wrapper.innerHTML = createCardHTML(p);
         grid.appendChild(wrapper);
     });
 }
@@ -142,6 +146,7 @@ function renderGrid(filterCat = 'all') {
 function initCarousel() {
     const track = document.getElementById("carousel-track");
     const container = document.getElementById("hero-carousel");
+    const dotsContainer = document.getElementById("carousel-dots");
     
     const featured = state.products.filter(p => p.stock > 0).slice(0, 5);
     
@@ -151,7 +156,7 @@ function initCarousel() {
     }
     container.classList.remove("hidden");
     
-    track.innerHTML = featured.map(p => {
+    track.innerHTML = featured.map((p, index) => {
         let img = p.image.startsWith('http') ? p.image : `${API_URL}${p.image.startsWith('/')?'':'/'}${p.image}`;
         return `
             <div class="carousel-slide">
@@ -166,11 +171,45 @@ function initCarousel() {
         `;
     }).join('');
 
-    let index = 0;
+    if(dotsContainer) {
+        dotsContainer.innerHTML = featured.map((_, i) => 
+            `<div class="carousel-dot ${i===0?'active':''}" onclick="setSlide(${i})"></div>`
+        ).join('');
+    }
+
+    startAutoSlide(featured.length);
+}
+
+function startAutoSlide(total) {
     if(carouselInterval) clearInterval(carouselInterval);
-    const slides = track.children;
     carouselInterval = setInterval(() => {
-        index = (index + 1) % slides.length;
-        track.style.transform = `translateX(-${index * 100}%)`;
-    }, 4000);
+        moveCarousel(1, total);
+    }, 5000);
+}
+
+function moveCarousel(direction, total = 5) {
+    const track = document.getElementById("carousel-track");
+    const slides = track.children;
+    total = slides.length;
+
+    currentSlide = (currentSlide + direction + total) % total;
+    updateCarouselUI();
+}
+
+function setSlide(index) {
+    currentSlide = index;
+    updateCarouselUI();
+    const track = document.getElementById("carousel-track");
+    startAutoSlide(track.children.length);
+}
+
+function updateCarouselUI() {
+    const track = document.getElementById("carousel-track");
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    
+    const dots = document.querySelectorAll(".carousel-dot");
+    dots.forEach((d, i) => {
+        if(i === currentSlide) d.classList.add("active");
+        else d.classList.remove("active");
+    });
 }

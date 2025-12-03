@@ -139,11 +139,11 @@ function toggleCart() {
     
     if(cart.classList.contains("open")) {
         cart.classList.remove("open");
-        if(overlay) overlay.classList.remove("active");
+        if(overlay) overlay.style.display = "none";
         document.body.style.overflow = '';
     } else {
         cart.classList.add("open");
-        if(overlay) overlay.classList.add("active");
+        if(overlay) overlay.style.display = "block";
         document.body.style.overflow = 'hidden';
     }
 }

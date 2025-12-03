@@ -64,15 +64,16 @@ function toggleAdminPanel() {
 }
 
 function switchTab(tabName) {
-    document.getElementById("view-products").classList.remove("active");
-    document.getElementById("view-sales").classList.remove("active");
+    document.getElementById("view-products").classList.add("hidden");
+    document.getElementById("view-sales").classList.add("hidden");
+    
     document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
     
     if (tabName === 'products') {
-        document.getElementById("view-products").classList.add("active");
+        document.getElementById("view-products").classList.remove("hidden");
         document.querySelectorAll(".tab-btn")[0].classList.add("active");
     } else {
-        document.getElementById("view-sales").classList.add("active");
+        document.getElementById("view-sales").classList.remove("hidden");
         document.querySelectorAll(".tab-btn")[1].classList.add("active");
         loadSalesMetrics();
     }
@@ -89,8 +90,6 @@ async function loadSalesMetrics() {
 
         renderAdminOrdersTable(orders);
         renderSalesChart(orders);
-        renderAdminOrdersTable(orders);
-
     } catch (e) { console.error(e); }
 }
 
@@ -104,15 +103,44 @@ function renderAdminOrdersTable(orders) {
         tr.innerHTML = `
             <td style="font-size:0.85rem;">...${o.id.slice(-4)}</td>
             <td>${o.customer_email.split('@')[0]}</td>
-            <td>${o.items.length} items</td>
+            <td style="font-size:0.85rem;">${o.items.length} items</td>
             <td>$${o.total.toLocaleString('es-CL')}</td>
             <td>
-                <select onchange="changeOrderStatus('${o.id}', this.value)" style="padding:5px; border-radius:4px;">
+                <select onchange="changeOrderStatus('${o.id}', this.value)" style="padding:4px; border-radius:4px; border:1px solid #ccc;">
                     ${['recibido','preparando','listo','entregado'].map(s => `<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}
                 </select>
             </td>
         `;
         tbody.appendChild(tr);
+    });
+}
+
+function renderSalesChart(orders) {
+    const ctx = document.getElementById('salesChart');
+    if(!ctx) return;
+    
+    const statusCounts = orders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+    }, {});
+    
+    const labels = Object.keys(statusCounts);
+    const data = Object.values(statusCounts);
+
+    if (salesChartInstance) salesChartInstance.destroy();
+    
+    salesChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Pedidos',
+                data: data,
+                backgroundColor: ['#4299E1', '#ECC94B', '#48BB78', '#ED8936'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
@@ -129,13 +157,13 @@ async function loadAdminTable() {
             let img = p.image.startsWith('http') ? p.image : `${API_URL}${p.image.startsWith('/')?'':'/'}${p.image}`;
             
             tr.innerHTML = `
-                <td><img src="${img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;"></td>
-                <td>${p.name}</td>
+                <td><img src="${img}" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #eee;"></td>
+                <td style="font-weight:600;">${p.name}</td>
                 <td>$${p.price.toLocaleString('es-CL')}</td>
                 <td style="font-weight:bold; color:${p.stock<10?'red':'green'}">${p.stock}</td>
-                <td>
-                    <button onclick="editProduct(${p.id})" class="btn-secondary" style="padding:4px 8px; margin-right:5px;">✏️</button>
-                    <button onclick="deleteProduct(${p.id})" class="btn-primary" style="padding:4px 8px; background:#E53E3E;">🗑️</button>
+                <td style="display:flex; gap:5px; align-items:center;">
+                    <button onclick="editProduct(${p.id})" class="btn-secondary" style="padding:6px 10px;">✏️</button>
+                    <button onclick="deleteProduct(${p.id})" class="btn-primary" style="padding:6px 10px; background:#E53E3E;">🗑️</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -151,14 +179,11 @@ async function handleFileUpload(input) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const btn = input.previousElementSibling;
-    
     try {
         const res = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
         if(!res.ok) throw new Error();
         const data = await res.json();
         document.getElementById("adm-img-url").value = data.url;
-        
         const preview = document.getElementById("preview-img");
         if(preview) {
             preview.src = `${API_URL}${data.url}`;
@@ -169,7 +194,6 @@ async function handleFileUpload(input) {
         toast("Error subida", "error");
     }
 }
-
 async function saveProduct() {
     const id = parseInt(document.getElementById("adm-id").value);
     const name = document.getElementById("adm-name").value;
@@ -184,22 +208,17 @@ async function saveProduct() {
     try {
         if (isEditingId) await api(`/products/${isEditingId}`, "PUT", pData);
         else await api("/products", "POST", pData);
-        
         toast("Guardado", "success");
         clearForm();
         loadAdminTable();
         loadProducts(); 
-    } catch (e) {
-        toast(e.message || "Error al guardar", "error");
-    }
+    } catch (e) { toast(e.message || "Error al guardar", "error"); }
 }
-
 async function deleteProduct(id) {
     if(!confirm("¿Borrar?")) return;
     try { await api(`/products/${id}`, "DELETE"); loadAdminTable(); loadProducts(); }
     catch(e) { toast("Error", "error"); }
 }
-
 function clearForm() {
     isEditingId = null;
     document.getElementById("adm-id").value = "";
@@ -212,7 +231,6 @@ function clearForm() {
     if(preview) preview.style.display = "none";
     document.querySelector("#view-products .btn-primary").innerText = "Guardar Producto";
 }
-
 function editProduct(id) {
     const p = state.products.find(x => x.id === id);
     if (!p) return;
@@ -224,54 +242,10 @@ function editProduct(id) {
     document.getElementById("adm-price").value = p.price;
     document.getElementById("adm-stock").value = p.stock;
     document.getElementById("adm-img-url").value = p.image;
-    
-    const preview = document.getElementById("preview-img");
-    if(preview) {
-        preview.src = p.image.startsWith('http') ? p.image : `${API_URL}${p.image}`;
-        preview.style.display = "block";
-    }
     document.querySelector("#view-products .btn-primary").innerText = "Actualizar";
     document.querySelector(".admin-container").scrollTo({top:0, behavior:'smooth'});
 }
-
 async function changeOrderStatus(id, status) {
     try { await api(`/orders/${id}/status`, "PATCH", { status }); toast("Estado actualizado"); }
     catch(e) { toast("Error", "error"); }
-}
-
-function renderSalesChart(orders) {
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const statusCounts = orders.reduce((acc, order) => {
-        acc[order.status] = (acc[order.status] || 0) + 1;
-        return acc;
-    }, {});
-    
-    const labels = Object.keys(statusCounts);
-    const data = Object.values(statusCounts);
-
-    if (salesChartInstance) salesChartInstance.destroy();
-    
-    salesChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: '# de Pedidos por Estado',
-                data: data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)', 
-                    'rgba(54, 162, 235, 0.7)', 
-                    'rgba(255, 206, 86, 0.7)', 
-                    'rgba(75, 192, 192, 0.7)'  
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } }
-            }
-        }
-    });
 }
