@@ -1,128 +1,83 @@
-/* CONTENEDOR PRINCIPAL */
+/* ADMIN CSS - CORREGIDO */
+
 .admin-container { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    background: #f8f9fa; 
-    z-index: 3000; 
-    padding: 20px; 
-    overflow-y: auto; 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: #f4f7fa; z-index: 3000; padding: 20px; overflow-y: auto; 
     display: none; 
 }
 .admin-container.open { display: block; }
 
-/* CENTRADO DEL CONTENIDO */
-.admin-view {
-    max-width: 1000px; /* Ancho máximo para que no se estire */
-    margin: 0 auto;    /* Centrado horizontal */
-    background: transparent;
+/* CENTRADO PRINCIPAL */
+.admin-navbar, .admin-view {
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .admin-navbar { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px; 
-    max-width: 1000px; 
-    margin-left: auto; 
-    margin-right: auto;
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 20px; background: white; padding: 15px 20px; 
+    border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-/* TABS */
-.admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+/* TABS CENTRADOS */
+.admin-tabs { 
+    display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; 
+}
 .tab-btn { 
-    padding: 10px 20px; 
-    background: var(--white); 
-    border: 1px solid #e2e8f0; 
-    border-radius: 30px; 
-    font-weight: 600; 
-    cursor: pointer; 
-    transition: all 0.2s;
-    color: var(--text-light);
+    padding: 10px 25px; border: none; background: #e2e8f0; 
+    border-radius: 30px; font-weight: 600; color: #4a5568; cursor: pointer; 
+    transition: all 0.3s;
 }
 .tab-btn.active { 
-    background: var(--text-main); 
-    color: var(--white); 
-    border-color: var(--text-main); 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* FORMULARIO */
+/* FORMULARIO ESTILIZADO */
 .admin-form { 
-    background: var(--white); 
-    padding: 25px; 
-    border-radius: 16px; 
-    margin-bottom: 30px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-    display: grid; 
-    gap: 15px;
-    max-width: 600px; /* Formulario más compacto */
-    margin: 0 auto 30px auto; /* Centrado */
+    background: white; padding: 30px; border-radius: 16px; margin-bottom: 30px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: grid; gap: 15px;
+    max-width: 600px; margin-left: auto; margin-right: auto; /* Centrado */
 }
 
-/* TABLAS */
+/* TABLA ELEGANTE */
 .admin-table { 
-    width: 100%; 
-    border-collapse: separate; 
-    border-spacing: 0; 
-    background: var(--white); 
-    border-radius: 12px; 
-    overflow: hidden; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
+    width: 100%; border-collapse: separate; border-spacing: 0; 
+    background: white; border-radius: 12px; overflow: hidden; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px;
 }
 .admin-table th { 
-    background: var(--text-main); 
-    color: var(--white); 
-    padding: 15px; 
-    text-align: left; 
-    font-weight: 600;
+    background: #2d3748; color: white; padding: 15px; text-align: left; 
 }
 .admin-table td { 
-    padding: 12px 15px; 
-    border-bottom: 1px solid #f0f0f0; 
-    vertical-align: middle;
+    padding: 12px 15px; border-bottom: 1px solid #edf2f7; vertical-align: middle;
 }
-.admin-table tr:last-child td { border-bottom: none; }
 
-/* BOTONES DE ACCIÓN (Mejorados) */
+/* BOTONES DE ACCIÓN (LÁPIZ Y BASURERO) */
 .action-btn {
-    width: 32px; 
-    height: 32px; 
-    border-radius: 8px; 
-    border: none; 
-    display: inline-flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-    transition: transform 0.1s;
-    font-size: 1rem;
+    width: 35px; height: 35px; border-radius: 8px; border: none; 
+    display: inline-flex; align-items: center; justify-content: center; 
+    cursor: pointer; transition: transform 0.2s; margin-right: 5px;
 }
 .action-btn:hover { transform: scale(1.1); }
-.btn-edit { background: #EBF8FF; color: #3182CE; }
-.btn-delete { background: #FFF5F5; color: #E53E3E; }
+.btn-edit { background: #bee3f8; color: #2b6cb0; font-size: 1.2rem; }
+.btn-delete { background: #fed7d7; color: #c53030; font-size: 1.2rem; }
 
-/* COLORES DE ESTADO (Badges) */
+/* COLORES DE ESTADO (BADGES) */
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; 
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    border: none; cursor: pointer; outline: none;
 }
-.status-recibido { background: #BEE3F8; color: #2B6CB0; }
-.status-preparando { background: #FEFCBF; color: #975A16; }
-.status-listo { background: #C6F6D5; color: #276749; }
-.status-entregado { background: #E2E8F0; color: #4A5568; }
+.status-recibido { background: #ebf8ff; color: #2b6cb0; }     /* Azul */
+.status-preparando { background: #fefcbf; color: #975a16; }  /* Amarillo */
+.status-listo { background: #c6f6d5; color: #22543d; }       /* Verde */
+.status-entregado { background: #edf2f7; color: #4a5568; }   /* Gris */
 
-/* KPI BOXES */
+/* KPIS */
+.kpi-row { display: flex; gap: 20px; margin-bottom: 30px; }
 .kpi-box { 
-    background: var(--white); 
-    padding: 20px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-    flex: 1; 
-    text-align: center;
+    flex: 1; background: white; padding: 20px; border-radius: 12px; 
+    text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
+.kpi-box h3 { margin: 0; color: #718096; font-size: 0.9rem; text-transform: uppercase; }
+.kpi-box span { display: block; font-size: 2rem; font-weight: 800; color: var(--primary); margin-top: 5px; }

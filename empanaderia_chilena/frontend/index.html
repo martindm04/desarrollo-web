@@ -97,21 +97,29 @@
         </div>
 
         <div id="view-sales" class="admin-view hidden">
-            <button class="btn-primary" onclick="loadSalesMetrics()">🔄 Actualizar Métricas</button>
-            <div style="margin-top:20px; display:flex; gap:20px;">
-                <div class="kpi-box"><h3>Total: <span id="kpi-total">$0</span></h3></div>
-                <div class="kpi-box"><h3>Pedidos: <span id="kpi-count">0</span></h3></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <button class="btn-primary" onclick="loadSalesMetrics()" style="width:auto;">🔄 Actualizar</button>
+                <div style="display:flex; gap:20px;">
+                    <span style="font-weight:bold;">Total: <span id="kpi-total" style="color:var(--primary)">$0</span></span>
+                    <span style="font-weight:bold;">Pedidos: <span id="kpi-count" style="color:var(--primary)">0</span></span>
+                </div>
+            </div>
+
+            <div style="background:white; padding:20px; border-radius:12px; margin-bottom:30px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
+                    <button id="btn-chart-status" class="tab-btn chart-toggle-btn active" onclick="setChartType('status')">Estado Pedidos</button>
+                    <button id="btn-chart-products" class="tab-btn chart-toggle-btn" onclick="setChartType('products')">Ventas por Producto</button>
+                </div>
+                <div style="height:300px; width:100%;">
+                    <canvas id="salesChart"></canvas>
+                </div>
             </div>
             
-            <h3 style="margin-top: 30px; margin-bottom: 10px;">Últimas Órdenes</h3>
+            <h3 style="margin-bottom: 15px;">Últimas Órdenes</h3>
             <table class="admin-table">
                 <thead><tr><th>ID</th><th>Cliente</th><th>Items</th><th>Total</th><th>Estado</th></tr></thead>
                 <tbody id="admin-orders-table"></tbody>
             </table>
-            
-            <div style="height:300px; margin-top:20px;">
-                <canvas id="salesChart"></canvas>
-            </div>
         </div>
     </section>
 

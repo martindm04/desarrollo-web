@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { state } from './state.js';
 import { API_URL } from './config.js';
-import { renderSkeletons } from './utils.js';
+import { renderSkeletons, toast, openModal } from './utils.js'; // Asegúrate de importar lo necesario
 
 let carouselInterval = null;
 let currentSlide = 0;
@@ -10,6 +10,7 @@ export function initProducts() {
     renderSkeletons();
     loadProducts();
 
+    // Exponer funciones globales
     window.showFullCatalog = showFullCatalog;
     window.showHome = showHome;
     window.moveCarousel = moveCarousel;
@@ -24,14 +25,34 @@ export async function loadProducts() {
     } catch (e) {
         console.error(e);
         const container = document.getElementById("home-view");
-        if(container) container.innerHTML = `<div style="padding:20px; text-align:center; color:red;">Error de conexión</div>`;
+        if(container) container.innerHTML = `<div style="padding:20px; text-align:center; color:red;">No se pudo conectar con el servidor</div>`;
     }
 }
 
 function createCardHTML(p) {
     let imgUrl = p.image;
+
+    // --- FIX CRÍTICO PARA IMÁGENES EN MÓVIL ---
+    // Si la base de datos tiene guardado "localhost" o "127.0.0.1", lo limpiamos
+    if (imgUrl && (imgUrl.includes('localhost') || imgUrl.includes('127.0.0.1'))) {
+        try {
+            const urlObj = new URL(imgUrl);
+            imgUrl = urlObj.pathname; // Nos quedamos solo con "/static/images/..."
+        } catch(e) {}
+    }
+
+    // Construimos la URL correcta usando la IP actual (API_URL)
     if (!imgUrl.startsWith('http')) {
-        imgUrl = imgUrl.startsWith('/') ? `${API_URL}${imgUrl}` : `${API_URL}/static/images/${imgUrl}`;
+        // Limpieza de slashes para evitar errores como "http://ip:8000//static..."
+        const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+        const cleanPath = imgUrl.startsWith('/') ? imgUrl : `/${imgUrl}`;
+        
+        // Si falta la carpeta static, la agregamos (seguridad)
+        if (!cleanPath.includes('/static/images') && !cleanPath.includes('/static')) {
+             imgUrl = `${cleanBase}/static/images${cleanPath}`;
+        } else {
+             imgUrl = `${cleanBase}${cleanPath}`;
+        }
     }
 
     const hasStock = p.stock > 0;
@@ -40,7 +61,7 @@ function createCardHTML(p) {
         <div class="card">
             <div class="card-img">
                 <span class="badge ${p.category}">${p.category}</span>
-                <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Error'" loading="lazy" alt="${p.name}">
+                <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Imagen'" loading="lazy" alt="${p.name}">
             </div>
             <div class="card-info">
                 <h3>${p.name}</h3>
@@ -64,7 +85,6 @@ function createCardHTML(p) {
 function renderHome() {
     const container = document.getElementById("home-view");
     const gridView = document.getElementById("full-grid-view");
-    
     if(!container) return;
 
     container.classList.remove("hidden");
@@ -94,7 +114,6 @@ function renderHome() {
             container.appendChild(section);
         }
     });
-
 }
 
 function showFullCatalog(filterCat = 'all') {
@@ -115,32 +134,25 @@ function showFullCatalog(filterCat = 'all') {
 function showHome() {
     document.getElementById("full-grid-view").classList.add("hidden");
     document.getElementById("home-view").classList.remove("hidden");
-    
     const carousel = document.getElementById("hero-carousel");
     if(carousel) carousel.classList.remove("hidden");
-
     window.scrollTo(0,0);
 }
 
 function renderGrid(filterCat = 'all') {
     const grid = document.getElementById("grid");
     grid.innerHTML = "";
-    
     const filtered = state.products.filter(p => filterCat === 'all' || p.category === filterCat);
-
-    const emptyState = document.getElementById("empty-state");
+    
     if(filtered.length === 0) {
-        if(emptyState) emptyState.classList.remove("hidden");
+        document.getElementById("empty-state").classList.remove("hidden");
     } else {
-        if(emptyState) emptyState.classList.add("hidden");
+        document.getElementById("empty-state").classList.add("hidden");
+        filtered.forEach(p => {
+            // No creamos wrapper extra para que el grid CSS funcione directo sobre .card
+            grid.innerHTML += createCardHTML(p);
+        });
     }
-
-    filtered.forEach(p => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrapper'; 
-        wrapper.innerHTML = createCardHTML(p);
-        grid.appendChild(wrapper);
-    });
 }
 
 function initCarousel() {
@@ -148,6 +160,7 @@ function initCarousel() {
     const container = document.getElementById("hero-carousel");
     const dotsContainer = document.getElementById("carousel-dots");
     
+    // Filtrar productos con imagen válida
     const featured = state.products.filter(p => p.stock > 0).slice(0, 5);
     
     if (featured.length === 0 || !track) {
@@ -156,8 +169,17 @@ function initCarousel() {
     }
     container.classList.remove("hidden");
     
-    track.innerHTML = featured.map((p, index) => {
-        let img = p.image.startsWith('http') ? p.image : `${API_URL}${p.image.startsWith('/')?'':'/'}${p.image}`;
+    track.innerHTML = featured.map(p => {
+        // Usamos lógica similar para imágenes del carrusel
+        let img = p.image;
+        if (img && (img.includes('localhost') || img.includes('127.0.0.1'))) {
+             try { img = new URL(img).pathname; } catch(e){}
+        }
+        const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+        if (!img.startsWith('http')) {
+             img = img.startsWith('/') ? `${cleanBase}${img}` : `${cleanBase}/static/images/${img}`;
+        }
+
         return `
             <div class="carousel-slide">
                 <div class="slide-content">
@@ -176,22 +198,18 @@ function initCarousel() {
             `<div class="carousel-dot ${i===0?'active':''}" onclick="setSlide(${i})"></div>`
         ).join('');
     }
-
     startAutoSlide(featured.length);
 }
 
 function startAutoSlide(total) {
     if(carouselInterval) clearInterval(carouselInterval);
-    carouselInterval = setInterval(() => {
-        moveCarousel(1, total);
-    }, 5000);
+    carouselInterval = setInterval(() => { moveCarousel(1, total); }, 5000);
 }
 
 function moveCarousel(direction, total = 5) {
     const track = document.getElementById("carousel-track");
-    const slides = track.children;
-    total = slides.length;
-
+    if(!track || !track.children.length) return;
+    total = track.children.length;
     currentSlide = (currentSlide + direction + total) % total;
     updateCarouselUI();
 }
@@ -200,12 +218,12 @@ function setSlide(index) {
     currentSlide = index;
     updateCarouselUI();
     const track = document.getElementById("carousel-track");
-    startAutoSlide(track.children.length);
+    if(track) startAutoSlide(track.children.length);
 }
 
 function updateCarouselUI() {
     const track = document.getElementById("carousel-track");
-    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    if(track) track.style.transform = `translateX(-${currentSlide * 100}%)`;
     
     const dots = document.querySelectorAll(".carousel-dot");
     dots.forEach((d, i) => {
