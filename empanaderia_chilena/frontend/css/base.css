@@ -1,36 +1,25 @@
 * { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-    font-family: 'Segoe UI', system-ui, sans-serif; 
+    box-sizing: border-box; margin: 0; padding: 0; 
     -webkit-tap-highlight-color: transparent; 
 }
 
 body { 
     background-color: var(--bg-body); 
     color: var(--text-main); 
-    padding-bottom: 80px;
-    background-image: radial-gradient(#cbd5e0 1px, transparent 1px);
-    background-size: 20px 20px;
+    font-family: var(--font-body); /* Aplicar fuente Lato */
+    padding-bottom: 80px; 
     min-height: 100vh;
 }
 
-.main-wrapper {
-    max-width: 1200px; 
-    margin: 0 auto; 
-    width: 100%;
+h1, h2, h3, h4, h5, h6, .logo, .price-tag, .btn-primary {
+    font-family: var(--font-heading); /* Aplicar fuente Poppins */
 }
 
+.main-wrapper { max-width: 1200px; margin: 0 auto; width: 100%; }
 .hidden { display: none !important; }
 
-#empty-state { 
-    text-align:center; 
-    padding: 4rem; 
-    color: var(--text-light); 
+/* ERROR MESSAGE */
+.error-msg {
+    color: #E53E3E; font-size: 0.8rem; margin-top: 4px; display: block;
 }
-
-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
+input.error { border-color: #E53E3E; box-shadow: 0 0 0 1px #E53E3E; }

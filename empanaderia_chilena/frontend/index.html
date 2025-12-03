@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Chilena | Empanadas</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@500;600;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/utils.css">
@@ -20,31 +24,46 @@
 
     <header>
         <nav>
-            <div class="logo" onclick="window.location.reload()">🥟 La Chilena</div>
+            <div class="logo" onclick="window.location.reload()">
+                <i class='bx bxs-hot'></i> La Chilena
+            </div>
+            
             <div id="auth-links" class="nav-group-desktop">
-                <a href="#" class="nav-link" onclick="openModal('login-modal')">Iniciar Sesión</a>
+                <a href="#" class="nav-link" onclick="openModal('login-modal')">Ingresar</a>
                 <a href="#" class="nav-btn-primary" onclick="openModal('register-modal')">Registrarse</a>
             </div>
+
             <div id="user-info" class="nav-group-desktop hidden">
                 <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                    <span style="font-size:0.8rem; color:#718096;">Hola,</span>
-                    <span id="user-name-display" style="font-weight:700; color:var(--primary);">Usuario</span>
+                    <span style="font-size:0.75rem; color:#718096; font-weight:600;">HOLA,</span>
+                    <span id="user-name-display" style="font-weight:800; color:var(--primary); line-height:1;">Usuario</span>
                 </div>
-                <a href="#" class="nav-link" onclick="openOrderHistory()">Mis Pedidos</a>
-                <a href="#" id="admin-link" class="hidden nav-link" onclick="toggleAdminPanel()">⚙️ Admin</a>
-                <a href="#" class="nav-link" onclick="logout()" style="color:#E53E3E;">Salir</a>
+                <a href="#" class="nav-link icon-link" onclick="openOrderHistory()" title="Mis Pedidos"><i class='bx bx-list-ul'></i></a>
+                <a href="#" id="admin-link" class="hidden nav-link icon-link" onclick="toggleAdminPanel()" title="Admin"><i class='bx bxs-dashboard'></i></a>
+                <a href="#" class="nav-link icon-link" onclick="logout()" style="color:#E53E3E;" title="Salir"><i class='bx bx-log-out'></i></a>
             </div>
+
             <div class="cart-icon" onclick="toggleCart()">
-                🛒 <span id="cart-count" class="cart-count-badge">0</span>
+                <i class='bx bx-cart-alt'></i> <span id="cart-count" class="cart-count-badge">0</span>
             </div>
         </nav>
     </header>
 
+    <div class="sticky-category-bar">
+        <div class="cat-wrapper">
+            <button class="cat-pill active" onclick="filterSticky('all', this)">Todo</button>
+            <button class="cat-pill" onclick="filterSticky('horno', this)">🔥 Horno</button>
+            <button class="cat-pill" onclick="filterSticky('frita', this)">🍳 Fritas</button>
+            <button class="cat-pill" onclick="filterSticky('bebida', this)">🥤 Bebidas</button>
+            <button class="cat-pill" onclick="filterSticky('acompañamiento', this)">🍟 Extras</button>
+        </div>
+    </div>
+
     <div class="main-wrapper">
         <div id="hero-carousel" class="hidden">
             <div class="carousel-track" id="carousel-track"></div>
-            <button class="carousel-arrow prev" onclick="moveCarousel(-1)">❮</button>
-            <button class="carousel-arrow next" onclick="moveCarousel(1)">❯</button>
+            <button class="carousel-arrow prev" onclick="moveCarousel(-1)"><i class='bx bx-chevron-left'></i></button>
+            <button class="carousel-arrow next" onclick="moveCarousel(1)"><i class='bx bx-chevron-right'></i></button>
             <div class="carousel-dots" id="carousel-dots"></div>
         </div>
 
@@ -52,23 +71,25 @@
 
         <div id="full-grid-view" class="hidden">
             <div class="grid-header">
-                <button class="btn-back" onclick="showHome()">‹ Atrás</button>
+                <button class="btn-back" onclick="showHome()"><i class='bx bx-arrow-back'></i> Volver</button>
                 <h2 id="grid-title">Resultados</h2>
             </div>
             <main class="grid" id="grid"></main>
         </div>
 
-        <div id="empty-state" class="hidden" style="text-align:center; padding:4rem; color:#aaa;">
-            <h3>No encontramos lo que buscas 😢</h3>
+        <div id="empty-state" class="hidden" style="text-align:center; padding:4rem 1rem; color:#A0AEC0;">
+            <i class='bx bx-food-menu' style="font-size:4rem; margin-bottom:10px; opacity:0.5;"></i>
+            <h3 style="font-family:var(--font-heading);">No encontramos ese antojo 😢</h3>
+            <p>Intenta buscando en otra categoría.</p>
         </div>
     </div>
 
     <section id="admin-panel" class="admin-container">
         <div class="admin-navbar">
-            <h2>⚙️ Panel de Control</h2>
-            <button onclick="toggleAdminPanel()" class="btn-back">✕ Cerrar</button>
+            <h2><i class='bx bxs-dashboard'></i> Panel de Control</h2>
+            <button onclick="toggleAdminPanel()" class="btn-back"><i class='bx bx-x'></i> Cerrar</button>
         </div>
-        <div style="margin-bottom:20px; border-bottom:2px solid #eee;">
+        <div style="margin-bottom:20px; border-bottom:2px solid #eee; text-align:center;">
             <button class="tab-btn active" onclick="switchTab('products')">📦 Inventario</button>
             <button class="tab-btn" onclick="switchTab('sales')">📊 Ventas</button>
         </div>
@@ -83,11 +104,13 @@
                     <option value="acompañamiento">Acompañamiento</option>
                     <option value="bebida">Bebida</option>
                 </select>
-                <input class="input-field" type="number" id="adm-price" placeholder="Precio">
-                <input class="input-field" type="number" id="adm-stock" placeholder="Stock">
+                <div style="display:flex; gap:10px;">
+                    <input class="input-field" type="number" id="adm-price" placeholder="Precio">
+                    <input class="input-field" type="number" id="adm-stock" placeholder="Stock">
+                </div>
                 <input class="input-field" type="text" id="adm-img-url" placeholder="URL Imagen">
                 <input type="file" id="adm-file" onchange="handleFileUpload(this)">
-                <button class="btn-primary" onclick="saveProduct()">Guardar Producto</button>
+                <button class="btn-primary" onclick="saveProduct()"><i class='bx bx-save'></i> Guardar Producto</button>
                 <button class="btn-secondary" onclick="clearForm()">Limpiar</button>
             </div>
             <table class="admin-table">
@@ -98,7 +121,7 @@
 
         <div id="view-sales" class="admin-view hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <button class="btn-primary" onclick="loadSalesMetrics()" style="width:auto;">🔄 Actualizar</button>
+                <button class="btn-primary" onclick="loadSalesMetrics()" style="width:auto;"><i class='bx bx-refresh'></i> Actualizar</button>
                 <div style="display:flex; gap:20px;">
                     <span style="font-weight:bold;">Total: <span id="kpi-total" style="color:var(--primary)">$0</span></span>
                     <span style="font-weight:bold;">Pedidos: <span id="kpi-count" style="color:var(--primary)">0</span></span>
@@ -125,13 +148,13 @@
 
     <div id="cart-sidebar">
         <div class="cart-header">
-            <h3>Mi Canasta 🛒</h3>
-            <span onclick="toggleCart()" style="cursor:pointer; font-size:1.5rem;">×</span>
+            <h3><i class='bx bx-shopping-bag'></i> Mi Canasta</h3>
+            <span onclick="toggleCart()" style="cursor:pointer; font-size:1.5rem;"><i class='bx bx-x'></i></span>
         </div>
         <div id="cart-items"></div>
         <div class="cart-footer">
             <div class="cart-row"><span>Total:</span><span id="cart-total">$0</span></div>
-            <button class="btn-primary" onclick="openCheckout()">Ir a Pagar</button>
+            <button class="btn-primary" onclick="openCheckout()">Ir a Pagar <i class='bx bx-right-arrow-alt'></i></button>
         </div>
     </div>
     <div id="cart-overlay" onclick="toggleCart()"></div>
@@ -139,9 +162,12 @@
     <div id="login-modal" class="modal">
         <div class="modal-box">
             <span class="close" onclick="closeModal('login-modal')">×</span>
-            <h2 style="text-align:center; margin-bottom:20px;">Acceso</h2>
-            <input type="text" id="login-user" class="input-field" placeholder="Usuario" style="margin-bottom:10px;">
-            <input type="password" id="login-pass" class="input-field" placeholder="Contraseña" style="margin-bottom:20px;">
+            <h2 style="text-align:center; margin-bottom:20px;">¡Hola de nuevo! 👋</h2>
+            <div class="input-group">
+                <input type="text" id="login-user" class="input-field" placeholder="Correo electrónico">
+                <span class="error-msg hidden">Correo inválido</span>
+            </div>
+            <input type="password" id="login-pass" class="input-field" placeholder="Contraseña">
             <button class="btn-primary" onclick="login()">Entrar</button>
         </div>
     </div>
@@ -149,11 +175,11 @@
     <div id="register-modal" class="modal">
         <div class="modal-box">
             <span class="close" onclick="closeModal('register-modal')">×</span>
-            <h2 style="text-align:center; margin-bottom:20px;">Registro</h2>
-            <input type="text" id="reg-name" class="input-field" placeholder="Nombre" style="margin-bottom:10px;">
-            <input type="email" id="reg-email" class="input-field" placeholder="Correo" style="margin-bottom:10px;">
-            <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña (min 8)" style="margin-bottom:20px;">
-            <button class="btn-primary" onclick="register()">Crear</button>
+            <h2 style="text-align:center; margin-bottom:20px;">Crear Cuenta 🚀</h2>
+            <input type="text" id="reg-name" class="input-field" placeholder="Nombre completo">
+            <input type="email" id="reg-email" class="input-field" placeholder="Correo electrónico">
+            <input type="password" id="reg-pass" class="input-field" placeholder="Contraseña (min 8)">
+            <button class="btn-primary" onclick="register()">Registrarme</button>
         </div>
     </div>
 
@@ -163,14 +189,14 @@
             <h2 id="qty-prod-name">Producto</h2>
             <img id="qty-prod-img" class="qty-img">
             <div class="qty-control-lg">
-                <button onclick="adjustModalQty(-1)">-</button>
+                <button onclick="adjustModalQty(-1)"><i class='bx bx-minus'></i></button>
                 <span id="qty-val">1</span>
-                <button onclick="adjustModalQty(1)">+</button>
+                <button onclick="adjustModalQty(1)"><i class='bx bx-plus'></i></button>
             </div>
             <p>Subtotal: <strong id="qty-subtotal">$0</strong></p>
             <div style="display:grid; gap:10px; margin-top:20px;">
-                <button class="btn-primary" onclick="confirmAdd(false)">Agregar y Seguir</button>
-                <button class="btn-secondary" onclick="confirmAdd(true)">Pagar Ahora</button>
+                <button class="btn-primary" onclick="confirmAdd(false)">Seguir comprando</button>
+                <button class="btn-secondary" onclick="confirmAdd(true)">Pagar ahora</button>
             </div>
         </div>
     </div>
@@ -178,7 +204,7 @@
     <div id="history-modal" class="modal">
         <div class="modal-box" style="width:90%; max-width:700px; padding:30px;">
             <span class="close" onclick="closeModal('history-modal')">×</span>
-            <h2>📜 Historial de Pedidos</h2>
+            <h2>📜 Historial</h2>
             <div style="max-height:50vh; overflow-y:auto; margin-top:20px;">
                 <table style="width:100%; text-align:left; border-collapse:collapse;">
                     <thead style="border-bottom:2px solid #eee;">
@@ -186,7 +212,7 @@
                     </thead>
                     <tbody id="history-body"></tbody>
                 </table>
-                <p id="no-history" class="hidden" style="text-align:center; padding:20px;">Sin pedidos.</p>
+                <p id="no-history" class="hidden" style="text-align:center; padding:20px;">Aún no tienes pedidos.</p>
             </div>
         </div>
     </div>
@@ -194,12 +220,12 @@
     <div id="checkout-modal" class="modal">
         <div class="modal-box" style="max-width:400px;">
             <span class="close" onclick="closeModal('checkout-modal')">×</span>
-            <h3>Confirmar Pago</h3>
+            <h3><i class='bx bx-credit-card'></i> Confirmar Pago</h3>
             <div style="background:#f7fafc; padding:15px; border-radius:10px; margin:15px 0;">
                 <p>Cliente: <strong id="chk-email">...</strong></p>
                 <p style="font-size:1.2rem; margin-top:10px;">Total: <strong id="chk-total" style="color:var(--primary)">$0</strong></p>
             </div>
-            <button class="btn-primary" onclick="processPayment()">Pagar</button>
+            <button class="btn-primary" onclick="processPayment()">Pagar y Finalizar</button>
         </div>
     </div>
 
@@ -207,19 +233,19 @@
 
     <nav class="bottom-nav">
         <a href="#" onclick="showHome()" class="nav-item active">
-            <span>🏠</span>
+            <i class='bx bx-home-alt-2'></i>
             <small>Inicio</small>
         </a>
         <a href="#" onclick="showFullCatalog('all')" class="nav-item">
-            <span>🔍</span>
+            <i class='bx bx-search-alt-2'></i>
             <small>Catálogo</small>
         </a>
         <a href="#" onclick="toggleCart()" class="nav-item">
-            <span>🛒</span>
+            <i class='bx bx-shopping-bag'></i>
             <small>Canasta</small>
         </a>
         <a href="#" onclick="handleProfileClick()" class="nav-item">
-            <span>👤</span>
+            <i class='bx bx-user-circle'></i>
             <small>Perfil</small>
         </a>
     </nav>

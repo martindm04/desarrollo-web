@@ -15,6 +15,7 @@ export function initProducts() {
     window.showHome = showHome;
     window.moveCarousel = moveCarousel;
     window.setSlide = setSlide;
+    window.filterSticky = filterSticky;
 }
 
 export async function loadProducts() {
@@ -230,4 +231,22 @@ function updateCarouselUI() {
         if(i === currentSlide) d.classList.add("active");
         else d.classList.remove("active");
     });
+}
+
+function filterSticky(category, btnElement) {
+    // 1. Actualizar visualmente los botones
+    document.querySelectorAll('.cat-pill').forEach(btn => btn.classList.remove('active'));
+    btnElement.classList.add('active');
+
+    // 2. Si estamos en modo "Ver todo" (Home), scrollear al Home
+    // Si ya estamos en "Full Catalog", filtrar ahí.
+    const fullGrid = document.getElementById("full-grid-view");
+    
+    // Si el carrusel está visible (estamos en home) y seleccionan algo que no sea 'all',
+    // podríamos querer ir al catálogo completo automáticamente.
+    if (category !== 'all') {
+        showFullCatalog(category);
+    } else {
+        showHome();
+    }
 }

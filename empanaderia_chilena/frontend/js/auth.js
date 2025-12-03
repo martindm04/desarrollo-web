@@ -7,6 +7,26 @@ export function initAuth() {
     window.login = login;
     window.register = register;
     window.logout = logout;
+    
+    // VALIDACIÓN EN TIEMPO REAL
+    const emailInput = document.getElementById('login-user');
+    if(emailInput) {
+        emailInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            const errorSpan = e.target.nextElementSibling;
+            
+            // Regex simple para email
+            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+            
+            if(val.length > 0 && !isValid && val.includes('@')) {
+                e.target.classList.add('error');
+                if(errorSpan) errorSpan.classList.remove('hidden');
+            } else {
+                e.target.classList.remove('error');
+                if(errorSpan) errorSpan.classList.add('hidden');
+            }
+        });
+    }
 }
 
 function saveSession() { 
