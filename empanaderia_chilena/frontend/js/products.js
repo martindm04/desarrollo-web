@@ -47,11 +47,15 @@ function createCardHTML(p) {
     }
 
     const hasStock = p.stock > 0;
+    
+    // --- CORRECCIÓN Ñ ---
+    // Reemplaza "ñ" por "n" para que coincida con el CSS
+    const categoryClass = p.category.toLowerCase().replace(/ñ/g, 'n').replace(/\s+/g, '-');
 
     return `
         <div class="card">
             <div class="card-img">
-                <span class="badge ${p.category}">${p.category}</span>
+                <span class="badge ${categoryClass}">${p.category}</span>
                 <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/150?text=Sin+Imagen'" loading="lazy" alt="${p.name}">
             </div>
             <div class="card-info">
@@ -163,10 +167,12 @@ function initCarousel() {
         const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
         if (!img.startsWith('http')) { img = img.startsWith('/') ? `${cleanBase}${img}` : `${cleanBase}/static/images/${img}`; }
 
+        const categoryClass = p.category.toLowerCase().replace(/ñ/g, 'n').replace(/\s+/g, '-');
+
         return `
             <div class="carousel-slide">
                 <div class="slide-content">
-                    <span class="badge ${p.category}" style="position:static; display:inline-block; margin-bottom:5px;">${p.category}</span>
+                    <span class="badge ${categoryClass}" style="position:static; display:inline-block; margin-bottom:5px;">${p.category}</span>
                     <h2>${p.name}</h2>
                     <h3 style="color:#555; margin-bottom:15px;">$${p.price.toLocaleString('es-CL')}</h3>
                     <button class="btn-primary" onclick="addToCart(${p.id})" style="width:auto; padding:8px 20px; font-size:0.9rem;">Lo quiero</button>
