@@ -1,41 +1,39 @@
-#cart-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; 
-}
-#cart-overlay.active { display: block; }
-
-#cart-sidebar { 
+#cart-sidebar {
     position: fixed; top: 0; right: -100%; width: 85%; max-width: 400px; height: 100%; 
-    background: var(--white); z-index: 2100; transition: right 0.3s ease; 
-    display: flex; flex-direction: column; box-shadow: -5px 0 20px rgba(0,0,0,0.2);
+    background: var(--white); 
+    z-index: 6000; /* AUMENTADO: Para estar encima de todo (el btn admin suele ser 4500) */
+    transition: right 0.3s ease; 
+    display: flex; flex-direction: column; 
+    box-shadow: -5px 0 20px rgba(0,0,0,0.2);
 }
 #cart-sidebar.open { right: 0; }
 
 .cart-header { 
-    padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; 
+    padding: 20px; border-bottom: 1px solid #eee; display: flex; 
+    justify-content: space-between; align-items: center; 
     font-weight: bold; font-size: 1.2rem; background: var(--primary); color: var(--white);
 }
 
 #cart-items { flex: 1; overflow-y: auto; padding: 20px; }
 
 .cart-item-row { 
-    display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; 
-    border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;
+    display: flex; justify-content: space-between; margin-bottom: 15px; 
+    align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;
 }
 
-.cart-footer { padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; }
+.cart-footer { 
+    padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; 
+    /* Aseguramos que el footer tenga fondo sólido */
+    position: relative; 
+    z-index: 6001; 
+}
 .cart-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; }
 
 .qty-control-mini { 
-    display: flex; align-items: center; gap: 10px; background: #edf2f7; padding: 2px 8px; border-radius: 12px; 
+    display: flex; align-items: center; gap: 10px; background: #edf2f7; 
+    padding: 2px 8px; border-radius: 12px; 
 }
-
 .qty-control-mini button { 
-    border: none; 
-    background: none; 
-    font-weight: bold; 
-    font-size: 1.2rem; 
-    width: 20px; 
-    cursor: pointer; 
-    line-height: 1;
-    padding: 0;
+    border: none; background: none; font-weight: bold; font-size: 1.2rem; 
+    width: 20px; cursor: pointer; line-height: 1; padding: 0;
 }

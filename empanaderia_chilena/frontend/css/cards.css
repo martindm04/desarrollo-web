@@ -1,80 +1,132 @@
-/* CARRUSEL HORIZONTAL */
+/* TARJETAS MEJORADAS */
+
+/* Contenedor del Carrusel (Ajuste para que no corte sombras) */
 .shelf-container {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding: 10px 20px 30px;
-    flex-wrap: nowrap;           /* CRÍTICO */
+    display: flex; gap: 25px; overflow-x: auto;
+    padding: 20px 25px 40px; /* Padding extra abajo para sombras grandes */
+    flex-wrap: nowrap;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
 }
 .shelf-container::-webkit-scrollbar { display: none; }
 
-.category-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; }
-.category-title { font-size: 1.2rem; font-weight: 700; }
-.view-all-link { font-size: 0.8rem; color: var(--primary); font-weight: 600; background: #FFF5F5; padding: 5px 10px; border-radius: 20px; cursor: pointer; }
+.category-header { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 10px 25px 0; margin-top: 10px;
+}
+.category-title { font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+.view-all-link { 
+    font-size: 0.85rem; color: var(--primary); font-weight: 700; 
+    background: rgba(211, 47, 47, 0.08); padding: 6px 14px; 
+    border-radius: 20px; cursor: pointer; transition: background 0.2s;
+}
+.view-all-link:hover { background: rgba(211, 47, 47, 0.15); }
 
-/* TARJETA (Base) */
+/* LA TARJETA EN SÍ */
 .card {
-    flex: 0 0 auto;             /* CRÍTICO: Rígida */
-    width: 220px;
-    height: 320px;
-    
+    flex: 0 0 auto;
+    width: 240px; /* Un poco más ancha para respirar */
+    height: 340px;
     background: var(--white);
-    border-radius: 16px;
+    border-radius: var(--radius-card); /* Esquinas muy redondeadas (20px) */
     box-shadow: var(--shadow);
     scroll-snap-align: start;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: transform 0.2s;
+    display: flex; flex-direction: column;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: none; /* Sin borde, solo sombra */
+    overflow: hidden; /* CRÍTICO: Recorta la imagen en las esquinas */
 }
 
-.card:hover { transform: translateY(-5px); }
-
-/* En móvil, un poco más pequeña */
-@media (max-width: 768px) {
-    .card { width: 170px; height: 280px; }
+/* Efecto Hover: Se levanta */
+.card:hover { 
+    transform: translateY(-8px); 
+    box-shadow: var(--shadow-hover);
 }
 
+/* IMAGEN */
 .card-img {
     height: 55%;
     width: 100%;
     position: relative;
-    background: #f0f0f0;
+    background: #f8f9fa;
+    overflow: hidden; /* Asegura recorte */
 }
-.card-img img { width: 100%; height: 100%; object-fit: cover; }
 
+.card-img img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    transition: transform 0.5s ease;
+}
+
+/* Zoom suave en la imagen al pasar el mouse */
+.card:hover .card-img img { transform: scale(1.08); }
+
+/* INFO Y TEXTOS */
 .card-info {
-    padding: 12px;
+    padding: 18px;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: space-between;
 }
 
 .card-info h3 { 
-    margin: 0; 
-    font-size: 1rem; 
-    display: -webkit-box; 
-    -webkit-line-clamp: 2; 
-    line-clamp: 2;
-    -webkit-box-orient: vertical; 
-    overflow: hidden; 
+    margin: 0; font-size: 1.1rem; line-height: 1.4; color: var(--text-main);
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; 
 }
 
-.card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-.price-tag { font-weight: 800; font-size: 1.1rem; }
+.card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+
+.price-info { display: flex; flex-direction: column; gap: 2px; }
+.price-tag { font-weight: 800; font-size: 1.2rem; color: var(--text-main); }
+
+/* BOTÓN DE AÑADIR (+) */
+.btn-add-mini {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--text-main); /* Negro suave elegante */
+    color: white; border: none; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+.btn-add-mini:hover { 
+    background: var(--primary); /* Cambia a rojo al hover */
+    transform: scale(1.1) rotate(90deg); /* Pequeña rotación divertida */
+}
+.btn-add-mini.disabled { background: #cbd5e0; cursor: not-allowed; box-shadow: none; transform: none; }
 
 /* BADGES */
 .badge {
-    position: absolute; top: 10px; left: 10px;
-    padding: 4px 10px; border-radius: 8px;
-    font-size: 0.7rem; font-weight: 800; color: var(--white);
-    text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: absolute; top: 15px; left: 15px;
+    padding: 5px 12px; border-radius: 12px;
+    font-size: 0.7rem; font-weight: 800; color: white;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 5;
+    background: rgba(0,0,0,0.7); /* Fallback */
+    backdrop-filter: blur(4px);
 }
 .badge.horno { background: #ed8936; }
 .badge.frita { background: #ecc94b; color: #5F370E; }
 .badge.bebida { background: #4299e1; }
-.badge.acompañamiento { background: var(--success); }
+.badge.acompañamiento { background: #805AD5; }
+
+/* CORAZÓN DE FAVORITOS (Si decides mantenerlo visualmente aunque sin lógica) */
+.fav-icon {
+    position: absolute; top: 15px; right: 15px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+.fav-icon:hover { transform: scale(1.1); color: var(--primary); }
+
+@media (max-width: 768px) {
+    .card { width: 180px; height: 290px; }
+    .card-img { height: 50%; }
+    .btn-add-mini { width: 35px; height: 35px; font-size: 1rem; }
+}

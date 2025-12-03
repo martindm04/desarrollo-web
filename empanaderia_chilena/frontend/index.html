@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="css/cart.css">
     <link rel="stylesheet" href="css/modals.css">
     <link rel="stylesheet" href="css/admin.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/search.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -38,6 +38,7 @@
                     <span style="font-size:0.75rem; color:#718096; font-weight:600;">HOLA,</span>
                     <span id="user-name-display" style="font-weight:800; color:var(--primary); line-height:1;">Usuario</span>
                 </div>
+                <a href="#" class="nav-link icon-link" onclick="toggleSearch()" title="Buscar"><i class='bx bx-search'></i></a>
                 <a href="#" class="nav-link icon-link" onclick="openOrderHistory()" title="Mis Pedidos"><i class='bx bx-list-ul'></i></a>
                 <a href="#" id="admin-link" class="hidden nav-link icon-link" onclick="toggleAdminPanel()" title="Admin"><i class='bx bxs-dashboard'></i></a>
                 <a href="#" class="nav-link icon-link" onclick="logout()" style="color:#E53E3E;" title="Salir"><i class='bx bx-log-out'></i></a>
@@ -48,6 +49,14 @@
             </div>
         </nav>
     </header>
+
+    <div id="search-overlay" class="search-overlay hidden">
+        <button class="close-search" onclick="toggleSearch()"><i class='bx bx-x'></i></button>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="¿Qué se te antoja hoy?" onkeyup="handleSearch(this.value)">
+            <div id="search-results" class="search-results"></div>
+        </div>
+    </div>
 
     <div class="sticky-category-bar">
         <div class="cat-wrapper">
@@ -127,7 +136,6 @@
                     <span style="font-weight:bold;">Pedidos: <span id="kpi-count" style="color:var(--primary)">0</span></span>
                 </div>
             </div>
-
             <div style="background:white; padding:20px; border-radius:12px; margin-bottom:30px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
                 <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
                     <button id="btn-chart-status" class="tab-btn chart-toggle-btn active" onclick="setChartType('status')">Estado Pedidos</button>
@@ -137,7 +145,6 @@
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
-            
             <h3 style="margin-bottom: 15px;">Últimas Órdenes</h3>
             <table class="admin-table">
                 <thead><tr><th>ID</th><th>Cliente</th><th>Items</th><th>Total</th><th>Estado</th></tr></thead>
@@ -205,27 +212,47 @@
         <div class="modal-box" style="width:90%; max-width:700px; padding:30px;">
             <span class="close" onclick="closeModal('history-modal')">×</span>
             <h2>📜 Historial</h2>
-            <div style="max-height:50vh; overflow-y:auto; margin-top:20px;">
-                <table style="width:100%; text-align:left; border-collapse:collapse;">
-                    <thead style="border-bottom:2px solid #eee;">
-                        <tr><th style="padding:10px;">#</th><th>Total</th><th>Estado</th><th>Detalle</th></tr>
-                    </thead>
-                    <tbody id="history-body"></tbody>
-                </table>
+            <div style="max-height:60vh; overflow-y:auto; margin-top:20px;">
+                <div id="history-list" class="history-list"></div>
                 <p id="no-history" class="hidden" style="text-align:center; padding:20px;">Aún no tienes pedidos.</p>
             </div>
         </div>
     </div>
 
     <div id="checkout-modal" class="modal">
-        <div class="modal-box" style="max-width:400px;">
+        <div class="modal-box" style="max-width:450px;">
             <span class="close" onclick="closeModal('checkout-modal')">×</span>
-            <h3><i class='bx bx-credit-card'></i> Confirmar Pago</h3>
-            <div style="background:#f7fafc; padding:15px; border-radius:10px; margin:15px 0;">
-                <p>Cliente: <strong id="chk-email">...</strong></p>
-                <p style="font-size:1.2rem; margin-top:10px;">Total: <strong id="chk-total" style="color:var(--primary)">$0</strong></p>
+            <h3><i class='bx bx-credit-card'></i> Finalizar Pedido</h3>
+            
+            <div class="delivery-toggle-container">
+                <div class="delivery-option active" id="opt-delivery" onclick="setDeliveryMode('delivery')">
+                    <i class='bx bx-cycling'></i> Delivery
+                </div>
+                <div class="delivery-option" id="opt-pickup" onclick="setDeliveryMode('pickup')">
+                    <i class='bx bx-store'></i> Retiro
+                </div>
             </div>
-            <button class="btn-primary" onclick="processPayment()">Pagar y Finalizar</button>
+
+            <div style="background:#f7fafc; padding:15px; border-radius:10px; margin:15px 0;">
+                <div id="delivery-info">
+                    <label style="font-size:0.8rem; font-weight:bold;">Dirección de Entrega</label>
+                    <input type="text" class="input-field" placeholder="Calle, Número, Comuna" style="margin-top:5px;">
+                </div>
+                <div id="pickup-info" class="hidden" style="text-align:center; color:#2D3748;">
+                    <p style="font-weight:bold;">📍 Local Maipú</p>
+                    <p style="font-size:0.9rem;">Av. Pajaritos 1234, Maipú</p>
+                    <small style="color:var(--primary);">Listo en 20-30 min</small>
+                </div>
+                
+                <hr style="margin:15px 0; border:0; border-top:1px solid #e2e8f0;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>Total a pagar:</span>
+                    <strong id="chk-total" style="font-size:1.4rem; color:var(--primary)">$0</strong>
+                </div>
+            </div>
+            
+            <button class="btn-primary" onclick="processPayment()">Confirmar y Pagar</button>
         </div>
     </div>
 
@@ -236,9 +263,9 @@
             <i class='bx bx-home-alt-2'></i>
             <small>Inicio</small>
         </a>
-        <a href="#" onclick="showFullCatalog('all')" class="nav-item">
+        <a href="#" onclick="toggleSearch()" class="nav-item">
             <i class='bx bx-search-alt-2'></i>
-            <small>Catálogo</small>
+            <small>Buscar</small>
         </a>
         <a href="#" onclick="toggleCart()" class="nav-item">
             <i class='bx bx-shopping-bag'></i>

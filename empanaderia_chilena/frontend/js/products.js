@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { state } from './state.js';
 import { API_URL } from './config.js';
-import { renderSkeletons, toast, openModal } from './utils.js'; // Asegúrate de importar lo necesario
+import { renderSkeletons, toast } from './utils.js';
 
 let carouselInterval = null;
 let currentSlide = 0;
@@ -10,11 +10,12 @@ export function initProducts() {
     renderSkeletons();
     loadProducts();
 
-    // Exponer funciones globales
     window.showFullCatalog = showFullCatalog;
     window.showHome = showHome;
     window.moveCarousel = moveCarousel;
     window.setSlide = setSlide;
+    window.toggleSearch = toggleSearch;
+    window.handleSearch = handleSearch;
     window.filterSticky = filterSticky;
 }
 
@@ -32,27 +33,16 @@ export async function loadProducts() {
 
 function createCardHTML(p) {
     let imgUrl = p.image;
-
-    // --- FIX CRÍTICO PARA IMÁGENES EN MÓVIL ---
-    // Si la base de datos tiene guardado "localhost" o "127.0.0.1", lo limpiamos
     if (imgUrl && (imgUrl.includes('localhost') || imgUrl.includes('127.0.0.1'))) {
-        try {
-            const urlObj = new URL(imgUrl);
-            imgUrl = urlObj.pathname; // Nos quedamos solo con "/static/images/..."
-        } catch(e) {}
+        try { imgUrl = new URL(imgUrl).pathname; } catch(e){}
     }
-
-    // Construimos la URL correcta usando la IP actual (API_URL)
+    const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
     if (!imgUrl.startsWith('http')) {
-        // Limpieza de slashes para evitar errores como "http://ip:8000//static..."
-        const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-        const cleanPath = imgUrl.startsWith('/') ? imgUrl : `/${imgUrl}`;
-        
-        // Si falta la carpeta static, la agregamos (seguridad)
-        if (!cleanPath.includes('/static/images') && !cleanPath.includes('/static')) {
-             imgUrl = `${cleanBase}/static/images${cleanPath}`;
+        imgUrl = imgUrl.startsWith('/') ? imgUrl : `/${imgUrl}`;
+        if (!imgUrl.includes('/static/images') && !imgUrl.includes('/static')) {
+             imgUrl = `${cleanBase}/static/images${imgUrl}`;
         } else {
-             imgUrl = `${cleanBase}${cleanPath}`;
+             imgUrl = `${cleanBase}${imgUrl}`;
         }
     }
 
@@ -75,7 +65,7 @@ function createCardHTML(p) {
                     </div>
                     <button class="btn-add-mini ${!hasStock ? 'disabled' : ''}" 
                         onclick="${hasStock ? `addToCart(${p.id})` : ''}">
-                        ${hasStock ? '+' : '×'}
+                        <i class='bx bx-plus'></i>
                     </button>
                 </div>
             </div>
@@ -149,19 +139,16 @@ function renderGrid(filterCat = 'all') {
         document.getElementById("empty-state").classList.remove("hidden");
     } else {
         document.getElementById("empty-state").classList.add("hidden");
-        filtered.forEach(p => {
-            // No creamos wrapper extra para que el grid CSS funcione directo sobre .card
-            grid.innerHTML += createCardHTML(p);
-        });
+        filtered.forEach(p => grid.innerHTML += createCardHTML(p));
     }
 }
 
+// --- CARRUSEL ---
 function initCarousel() {
     const track = document.getElementById("carousel-track");
     const container = document.getElementById("hero-carousel");
     const dotsContainer = document.getElementById("carousel-dots");
     
-    // Filtrar productos con imagen válida
     const featured = state.products.filter(p => p.stock > 0).slice(0, 5);
     
     if (featured.length === 0 || !track) {
@@ -171,15 +158,10 @@ function initCarousel() {
     container.classList.remove("hidden");
     
     track.innerHTML = featured.map(p => {
-        // Usamos lógica similar para imágenes del carrusel
         let img = p.image;
-        if (img && (img.includes('localhost') || img.includes('127.0.0.1'))) {
-             try { img = new URL(img).pathname; } catch(e){}
-        }
+        if (img && (img.includes('localhost') || img.includes('127.0.0.1'))) { try { img = new URL(img).pathname; } catch(e){} }
         const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-        if (!img.startsWith('http')) {
-             img = img.startsWith('/') ? `${cleanBase}${img}` : `${cleanBase}/static/images/${img}`;
-        }
+        if (!img.startsWith('http')) { img = img.startsWith('/') ? `${cleanBase}${img}` : `${cleanBase}/static/images/${img}`; }
 
         return `
             <div class="carousel-slide">
@@ -195,9 +177,7 @@ function initCarousel() {
     }).join('');
 
     if(dotsContainer) {
-        dotsContainer.innerHTML = featured.map((_, i) => 
-            `<div class="carousel-dot ${i===0?'active':''}" onclick="setSlide(${i})"></div>`
-        ).join('');
+        dotsContainer.innerHTML = featured.map((_, i) => `<div class="carousel-dot ${i===0?'active':''}" onclick="setSlide(${i})"></div>`).join('');
     }
     startAutoSlide(featured.length);
 }
@@ -225,7 +205,6 @@ function setSlide(index) {
 function updateCarouselUI() {
     const track = document.getElementById("carousel-track");
     if(track) track.style.transform = `translateX(-${currentSlide * 100}%)`;
-    
     const dots = document.querySelectorAll(".carousel-dot");
     dots.forEach((d, i) => {
         if(i === currentSlide) d.classList.add("active");
@@ -233,20 +212,60 @@ function updateCarouselUI() {
     });
 }
 
+function toggleSearch() {
+    const overlay = document.getElementById("search-overlay");
+    const input = document.getElementById("search-input");
+    
+    if (overlay.classList.contains("hidden")) {
+        overlay.classList.remove("hidden");
+        setTimeout(() => overlay.classList.add("active"), 10);
+        setTimeout(() => input.focus(), 100);
+        document.body.style.overflow = "hidden";
+    } else {
+        overlay.classList.remove("active");
+        setTimeout(() => overlay.classList.add("hidden"), 300);
+        document.body.style.overflow = "";
+        input.value = "";
+        document.getElementById("search-results").innerHTML = "";
+    }
+}
+
+function handleSearch(query) {
+    const resultsContainer = document.getElementById("search-results");
+    if (!query || query.length < 2) {
+        resultsContainer.innerHTML = "";
+        return;
+    }
+    const term = query.toLowerCase();
+    const matches = state.products.filter(p => p.name.toLowerCase().includes(term));
+
+    if (matches.length === 0) {
+        resultsContainer.innerHTML = `<p style="text-align:center; color:#aaa; margin-top:20px;">Sin resultados</p>`;
+        return;
+    }
+
+    resultsContainer.innerHTML = matches.map(p => {
+        let img = p.image;
+        if (img && (img.includes('localhost') || img.includes('127.0.0.1'))) { try { img = new URL(img).pathname; } catch(e){} }
+        const cleanBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+        if (!img.startsWith('http')) { img = img.startsWith('/') ? `${cleanBase}${img}` : `${cleanBase}/static/images/${img}`; }
+
+        return `
+            <div class="search-item" onclick="toggleSearch(); addToCart(${p.id})">
+                <img src="${img}">
+                <div>
+                    <h4>${p.name}</h4>
+                    <span>$${p.price.toLocaleString('es-CL')}</span>
+                </div>
+                <button class="btn-add-mini" style="margin-left:auto;"><i class='bx bx-plus'></i></button>
+            </div>
+        `;
+    }).join('');
+}
+
 function filterSticky(category, btnElement) {
-    // 1. Actualizar visualmente los botones
     document.querySelectorAll('.cat-pill').forEach(btn => btn.classList.remove('active'));
     btnElement.classList.add('active');
-
-    // 2. Si estamos en modo "Ver todo" (Home), scrollear al Home
-    // Si ya estamos en "Full Catalog", filtrar ahí.
-    const fullGrid = document.getElementById("full-grid-view");
-    
-    // Si el carrusel está visible (estamos en home) y seleccionan algo que no sea 'all',
-    // podríamos querer ir al catálogo completo automáticamente.
-    if (category !== 'all') {
-        showFullCatalog(category);
-    } else {
-        showHome();
-    }
+    if (category !== 'all') showFullCatalog(category);
+    else showHome();
 }

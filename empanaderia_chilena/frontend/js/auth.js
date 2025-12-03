@@ -8,23 +8,14 @@ export function initAuth() {
     window.register = register;
     window.logout = logout;
     
-    // VALIDACIÓN EN TIEMPO REAL
+    // Validación email en tiempo real
     const emailInput = document.getElementById('login-user');
     if(emailInput) {
         emailInput.addEventListener('input', (e) => {
             const val = e.target.value;
-            const errorSpan = e.target.nextElementSibling;
-            
-            // Regex simple para email
             const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-            
-            if(val.length > 0 && !isValid && val.includes('@')) {
-                e.target.classList.add('error');
-                if(errorSpan) errorSpan.classList.remove('hidden');
-            } else {
-                e.target.classList.remove('error');
-                if(errorSpan) errorSpan.classList.add('hidden');
-            }
+            if(val.length > 0 && !isValid && val.includes('@')) e.target.classList.add('error');
+            else e.target.classList.remove('error');
         });
     }
 }
@@ -41,53 +32,37 @@ function loadSession() {
             state.token = s.t; 
             updateAuthUI(); 
         } 
-    } catch(e) { 
-        localStorage.removeItem("dw_sess"); 
-    }
+    } catch(e) { localStorage.removeItem("dw_sess"); }
 }
 
 async function login() {
     const u = document.getElementById("login-user").value;
     const p = document.getElementById("login-pass").value;
-    
-    if(!u || !p) return toast("Ingresa usuario y contraseña", "error");
+    if(!u || !p) return toast("Ingresa datos", "error");
 
     try {
         const data = await api("/login", "POST", { identifier: u, password: p });
-        state.user = data.user; 
-        state.token = data.access_token;
-        
-        saveSession(); 
-        updateAuthUI(); 
-        closeModal("login-modal");
+        state.user = data.user; state.token = data.access_token;
+        saveSession(); updateAuthUI(); closeModal("login-modal");
         toast(`¡Hola ${state.user.name.split(' ')[0]}!`, "success");
-    } catch (e) { 
-        console.error(e);
-        toast("Credenciales incorrectas o error de conexión", "error"); 
-    }
+    } catch (e) { toast("Error login", "error"); }
 }
 
 async function register() {
     const name = document.getElementById("reg-name").value;
     const email = document.getElementById("reg-email").value;
     const pass = document.getElementById("reg-pass").value;
-
     if (!name || !email || !pass) return toast("Faltan datos", "error");
-    if (pass.length < 8) return toast("Contraseña muy corta (mín 8)", "error");
 
     try {
         await api("/register", "POST", { name, email, password: pass });
-        toast("¡Cuenta creada! Inicia sesión.", "success"); 
-        closeModal("register-modal"); 
-        openModal("login-modal");
-    } catch (e) { 
-        toast(e.message || "Error al registrar", "error"); 
-    }
+        toast("Creado. Inicia sesión.", "success"); 
+        closeModal("register-modal"); openModal("login-modal");
+    } catch (e) { toast("Error registro", "error"); }
 }
 
 function logout() {
-    state.user = null;
-    state.token = null;
+    state.user = null; state.token = null;
     localStorage.removeItem("dw_sess"); 
     window.location.reload();
 }
@@ -104,35 +79,19 @@ export function updateAuthUI() {
             userInfo.classList.remove("hidden");
             userInfo.style.display = "flex";
         }
+        document.getElementById("user-name-display").innerText = state.user.name.split(' ')[0];
         
-        const nameDisplay = document.getElementById("user-name-display");
-        if(nameDisplay) nameDisplay.innerText = state.user.name.split(' ')[0];
-        
-        if(state.user.role === 'admin') {
-            if(adminLink) adminLink.classList.remove("hidden");
-            createMobileAdminBtn();
+        if(state.user.role === 'admin' && adminLink) {
+            adminLink.classList.remove("hidden");
+            // createMobileAdminBtn(); <-- ELIMINADO PARA EVITAR SUPERPOSICIÓN
         }
         
-        if(mobileProfile) mobileProfile.innerHTML = `<span style="color:#D32F2F">👤</span><small>${state.user.name.split(' ')[0]}</small>`;
+        // Indicador visual en menú móvil
+        if(mobileProfile) mobileProfile.innerHTML = `<i class='bx bxs-user-circle' style='color:var(--primary)'></i><small style='color:var(--primary)'>${state.user.name.split(' ')[0]}</small>`;
 
     } else {
         if(authLinks) authLinks.classList.remove("hidden");
         if(userInfo) userInfo.classList.add("hidden");
-        if(mobileProfile) mobileProfile.innerHTML = `<span>👤</span><small>Perfil</small>`;
-        
-        const btn = document.getElementById("mobile-admin-btn");
-        if(btn) btn.remove();
+        if(mobileProfile) mobileProfile.innerHTML = `<i class='bx bx-user-circle'></i><small>Perfil</small>`;
     }
-}
-
-function createMobileAdminBtn() {
-    if(document.getElementById("mobile-admin-btn")) return;
-    if(window.innerWidth > 768) return;
-
-    const btn = document.createElement("button");
-    btn.id = "mobile-admin-btn";
-    btn.innerHTML = "⚙️";
-    btn.onclick = () => window.toggleAdminPanel();
-    btn.style.cssText = "position:fixed; bottom:80px; right:20px; width:50px; height:50px; border-radius:50%; background:#2d3748; color:white; font-size:1.5rem; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:4500;";
-    document.body.appendChild(btn);
 }

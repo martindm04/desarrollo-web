@@ -4,15 +4,21 @@
     --secondary: #2D3748;
     --accent: #FBC02D;
     
-    --bg-body: #F7FAFC; /* Color de fondo más limpio */
+    /* FONDO MEJORADO: Un gris muy sutil con tinte azulado, se ve más limpio */
+    --bg-body: #F0F2F5; 
+    
     --text-main: #1A202C;
     --text-light: #718096;
-    
     --white: #ffffff;
     
-    /* MEJORAS VISUALES */
-    --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+    /* SOMBRAS "SOFT UI" (Más suaves y difusas) */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+    --shadow: 0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+    --shadow-lg: 0 15px 30px -5px rgba(0,0,0,0.08), 0 8px 10px -5px rgba(0,0,0,0.02);
+    --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    
+    --radius-card: 20px; /* Redondez estándar para cards */
+    --radius-pill: 50px; /* Redondez total para botones */
     
     --font-heading: 'Poppins', sans-serif;
     --font-body: 'Lato', sans-serif;

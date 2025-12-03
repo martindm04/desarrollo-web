@@ -143,28 +143,75 @@ function createChart(ctx, type, data) {
 
 async function openOrderHistory() {
     if (!state.user) return toast("Debes iniciar sesión", "error");
+
     try {
         const orders = await api(`/orders/user/${state.user.email}`);
-        const tbody = document.getElementById("history-body");
+        state.orderHistory = orders; // Guardar para reorder
+        
+        const container = document.getElementById("history-list");
         const noHistory = document.getElementById("no-history");
-        tbody.innerHTML = "";
+        
+        container.innerHTML = "";
+
         if (orders.length === 0) {
             if (noHistory) noHistory.classList.remove("hidden");
         } else {
             if (noHistory) noHistory.classList.add("hidden");
-            orders.forEach(o => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td style="font-weight:bold;">#${o.id.slice(-4)}</td>
-                    <td>$${o.total.toLocaleString('es-CL')}</td>
-                    <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-                    <td style="font-size:0.8rem;">${o.items.length} items</td>
+            
+            // Renderizado Inverso (Más reciente primero)
+            orders.slice().reverse().forEach((o, index) => {
+                // Calcular índice real para reorder (porque invertimos el array visualmente)
+                const realIndex = orders.length - 1 - index;
+                
+                // Determinar paso activo (1-4)
+                let step = 1;
+                if (o.status === 'preparando') step = 2;
+                if (o.status === 'listo') step = 3;
+                if (o.status === 'entregado') step = 4;
+
+                const card = document.createElement("div");
+                card.className = "order-card";
+                card.innerHTML = `
+                    <div class="order-header">
+                        <span class="order-id">#${o.id.slice(-4)}</span>
+                        <span class="order-total">$${o.total.toLocaleString('es-CL')}</span>
+                    </div>
+                    
+                    <div class="progress-track">
+                        <div class="step ${step >= 1 ? 'active' : ''}">
+                            <div class="step-dot"></div>
+                            <div class="step-label">Recibido</div>
+                        </div>
+                        <div class="step ${step >= 2 ? 'active' : ''}">
+                            <div class="step-dot"></div>
+                            <div class="step-label">Cocina</div>
+                        </div>
+                        <div class="step ${step >= 3 ? 'active' : ''}">
+                            <div class="step-dot"></div>
+                            <div class="step-label">Listo</div>
+                        </div>
+                        <div class="step ${step >= 4 ? 'active' : ''}">
+                            <div class="step-dot"></div>
+                            <div class="step-label">Entregado</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:0.85rem; color:#718096; margin-top:15px;">
+                        ${o.items.map(i=>`${i.quantity} x ${i.name}`).join('<br>')}
+                    </div>
+
+                    <button class="reorder-btn" onclick="reorder(${realIndex})">
+                        <i class='bx bx-refresh'></i> Pedir de Nuevo
+                    </button>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
         openModal("history-modal");
-    } catch (e) { toast("Error al cargar historial", "error"); }
+    } catch (e) {
+        console.error(e);
+        toast("Error al cargar historial", "error");
+    }
 }
 
 function toggleAdminPanel() {

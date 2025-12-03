@@ -2,5 +2,6 @@ export const state = {
     user: null,
     token: null,
     products: [],
-    cart: []
+    cart: [],
+    orderHistory: [] // Nuevo campo para la función Re-order
 };

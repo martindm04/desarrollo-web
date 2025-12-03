@@ -25,3 +25,89 @@
     width: 45px; height: 45px; border-radius: 50%; border: 1px solid #ddd; 
     background: var(--white); cursor: pointer; 
 }
+
+/* --- CHECKOUT TOGGLE --- */
+.delivery-toggle-container {
+    display: flex;
+    background: #e2e8f0;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+.delivery-option {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.delivery-option.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- ORDER HISTORY CARD & PROGRESS --- */
+.order-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.order-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px;
+}
+.order-id { font-weight: 800; font-size: 1.1rem; }
+.order-total { color: var(--primary); font-weight: bold; }
+
+/* PROGRESS BAR */
+.progress-track {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 20px 0;
+}
+.progress-track::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 0; width: 100%; height: 4px;
+    background: #edf2f7;
+    z-index: 0;
+}
+.step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    width: 25%;
+}
+.step-dot {
+    width: 24px; height: 24px;
+    background: #edf2f7;
+    border-radius: 50%;
+    margin: 0 auto 5px;
+    border: 3px solid white;
+    transition: background 0.3s;
+}
+.step.active .step-dot { background: var(--primary); box-shadow: 0 0 0 2px rgba(211,47,47,0.2); }
+.step-label { font-size: 0.7rem; color: #a0aec0; font-weight: 600; }
+.step.active .step-label { color: var(--text-main); }
+
+.reorder-btn {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: #edf2f7;
+    color: var(--text-main);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+}
+.reorder-btn:hover { background: #e2e8f0; }

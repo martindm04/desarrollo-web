@@ -4,9 +4,10 @@
 }
 
 body { 
+    /* Fondo limpio sin patrones ruidosos, solo color sólido suave */
     background-color: var(--bg-body); 
     color: var(--text-main); 
-    font-family: var(--font-body); /* Aplicar fuente Lato */
+    font-family: var(--font-body);
     padding-bottom: 80px; 
     min-height: 100vh;
 }
