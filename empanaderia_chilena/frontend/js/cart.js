@@ -11,14 +11,13 @@ export function initCart() {
     loadCartFromStorage();
     renderCart();
 
-    window.globaladdToCart = addToCart;
+    window.addToCart = addToCart;
     window.adjustModalQty = adjustModalQty;
     window.confirmAdd = confirmAdd;
     window.modQty = modQty;
     window.toggleCart = toggleCart;
     window.openCheckout = openCheckout;
     window.processPayment = processPayment;
-    window.addToCart = addToCart;
 }
 
 function loadCartFromStorage() { 
@@ -103,8 +102,17 @@ function renderCart() {
     });
     
     const count = state.cart.reduce((a,b)=>a+b.quantity,0);
-    document.getElementById("cart-total").innerText = `$${state.cart.reduce((a,b)=>a+b.price*b.quantity,0).toLocaleString('es-CL')}`;
+    const total = state.cart.reduce((a,b)=>a+b.price*b.quantity,0);
+    document.getElementById("cart-total").innerText = `$${total.toLocaleString('es-CL')}`;
     
+    const net = Math.round(total / 1.19);
+    const tax = total - net;
+    
+    const elNet = document.getElementById("cart-net");
+    const elTax = document.getElementById("cart-tax");
+    if(elNet) elNet.innerText = `$${net.toLocaleString('es-CL')}`;
+    if(elTax) elTax.innerText = `$${tax.toLocaleString('es-CL')}`;
+
     if(cartCount) {
         cartCount.innerText = count;
         cartCount.style.display = count > 0 ? 'flex' : 'none';
@@ -121,7 +129,8 @@ function modQty(id, d) {
     if(item.quantity > max) item.quantity = max;
     if(item.quantity <= 0) state.cart = state.cart.filter(x => x.id !== id);
     
-    saveCart(); renderCart();
+    saveCart(); 
+    renderCart();
 }
 
 function toggleCart() {

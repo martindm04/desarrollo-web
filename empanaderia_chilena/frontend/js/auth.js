@@ -14,30 +14,36 @@ function saveSession() {
 }
 
 function loadSession() { 
-    const s = JSON.parse(localStorage.getItem("dw_sess")); 
-    if(s) { 
-        state.user = s.u; 
-        state.token = s.t; 
-        updateAuthUI(); 
-    } 
+    try {
+        const s = JSON.parse(localStorage.getItem("dw_sess")); 
+        if(s) { 
+            state.user = s.u; 
+            state.token = s.t; 
+            updateAuthUI(); 
+        } 
+    } catch(e) { 
+        localStorage.removeItem("dw_sess"); 
+    }
 }
 
 async function login() {
     const u = document.getElementById("login-user").value;
     const p = document.getElementById("login-pass").value;
     
-    if(!u || !p) return toast("Datos incompletos", "error");
+    if(!u || !p) return toast("Ingresa usuario y contraseña", "error");
 
     try {
         const data = await api("/login", "POST", { identifier: u, password: p });
         state.user = data.user; 
         state.token = data.access_token;
+        
         saveSession(); 
         updateAuthUI(); 
         closeModal("login-modal");
-        toast(`¡Hola ${state.user.name}!`, "success");
+        toast(`¡Hola ${state.user.name.split(' ')[0]}!`, "success");
     } catch (e) { 
-        toast(e.message || "Error de login", "error"); 
+        console.error(e);
+        toast("Credenciales incorrectas o error de conexión", "error"); 
     }
 }
 
@@ -46,12 +52,12 @@ async function register() {
     const email = document.getElementById("reg-email").value;
     const pass = document.getElementById("reg-pass").value;
 
-    if (!name || !email || !pass) return toast("Completa todo", "error");
-    if (pass.length < 8) return toast("Mínimo 8 caracteres", "error");
+    if (!name || !email || !pass) return toast("Faltan datos", "error");
+    if (pass.length < 8) return toast("Contraseña muy corta (mín 8)", "error");
 
     try {
         await api("/register", "POST", { name, email, password: pass });
-        toast("Cuenta creada"); 
+        toast("¡Cuenta creada! Inicia sesión.", "success"); 
         closeModal("register-modal"); 
         openModal("login-modal");
     } catch (e) { 
@@ -69,8 +75,8 @@ function logout() {
 export function updateAuthUI() {
     const authLinks = document.getElementById("auth-links");
     const userInfo = document.getElementById("user-info");
-    const mobileProfile = document.querySelectorAll(".nav-item")[3];
     const adminLink = document.getElementById("admin-link");
+    const mobileProfile = document.querySelectorAll(".nav-item")[3];
 
     if (state.user) {
         if(authLinks) authLinks.classList.add("hidden");
@@ -78,14 +84,16 @@ export function updateAuthUI() {
             userInfo.classList.remove("hidden");
             userInfo.style.display = "flex";
         }
-        document.getElementById("user-name-display").innerText = state.user.name.split(' ')[0];
         
-        if(state.user.role === 'admin' && adminLink) {
-            adminLink.classList.remove("hidden");
+        const nameDisplay = document.getElementById("user-name-display");
+        if(nameDisplay) nameDisplay.innerText = state.user.name.split(' ')[0];
+        
+        if(state.user.role === 'admin') {
+            if(adminLink) adminLink.classList.remove("hidden");
             createMobileAdminBtn();
         }
         
-        if(mobileProfile) mobileProfile.innerHTML = `<span>👤</span><small>${state.user.name.split(' ')[0]}</small>`;
+        if(mobileProfile) mobileProfile.innerHTML = `<span style="color:#D32F2F">👤</span><small>${state.user.name.split(' ')[0]}</small>`;
 
     } else {
         if(authLinks) authLinks.classList.remove("hidden");
@@ -104,7 +112,7 @@ function createMobileAdminBtn() {
     const btn = document.createElement("button");
     btn.id = "mobile-admin-btn";
     btn.innerHTML = "⚙️";
-    btn.onclick = () => window.toggleAdminPanel(); 
-    btn.style.cssText = "position:fixed; bottom:90px; right:20px; width:50px; height:50px; border-radius:50%; background:#2d3748; color:white; font-size:1.5rem; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:4500;";
+    btn.onclick = () => window.toggleAdminPanel();
+    btn.style.cssText = "position:fixed; bottom:80px; right:20px; width:50px; height:50px; border-radius:50%; background:#2d3748; color:white; font-size:1.5rem; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:4500;";
     document.body.appendChild(btn);
 }
