@@ -1,22 +1,17 @@
-/* CARRUSEL HORIZONTAL MEJORADO */
-
 .shelf-wrapper {
     position: relative;
-    /* El wrapper contiene las flechas y el contenedor de tarjetas */
 }
 
-/* El contenedor original ahora va dentro del wrapper */
 .shelf-container {
     display: flex; gap: 25px; overflow-x: auto;
     padding: 20px 25px 40px; 
     flex-wrap: nowrap;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
-    scroll-behavior: smooth; /* Movimiento suave */
+    scroll-behavior: smooth;
 }
 .shelf-container::-webkit-scrollbar { display: none; }
 
-/* NUEVAS FLECHAS DE NAVEGACIÓN */
 .shelf-arrow {
     position: absolute;
     top: 50%;
@@ -48,7 +43,6 @@
 .shelf-arrow.prev { left: 10px; }
 .shelf-arrow.next { right: 10px; }
 
-/* OCULTAR FLECHAS EN MÓVIL (Mejor UX usar swipe) */
 @media (max-width: 768px) {
     .shelf-arrow { display: none; }
     
@@ -56,7 +50,6 @@
     .btn-add-mini { width: 35px; height: 35px; font-size: 1rem; }
 }
 
-/* ... RESTO DE ESTILOS (Cards, Badges, etc.) SE MANTIENEN IGUAL ... */
 .category-header { 
     display: flex; justify-content: space-between; align-items: center; 
     padding: 10px 25px 0; margin-top: 10px;
@@ -69,7 +62,6 @@
 }
 .view-all-link:hover { background: rgba(211, 47, 47, 0.15); }
 
-/* TARJETA */
 .card {
     flex: 0 0 auto; width: 240px; height: 340px;
     background: var(--white); border-radius: var(--radius-card);

@@ -8,7 +8,6 @@ export function initAuth() {
     window.register = register;
     window.logout = logout;
     
-    // Validación email en tiempo real
     const emailInput = document.getElementById('login-user');
     if(emailInput) {
         emailInput.addEventListener('input', (e) => {
@@ -83,10 +82,8 @@ export function updateAuthUI() {
         
         if(state.user.role === 'admin' && adminLink) {
             adminLink.classList.remove("hidden");
-            // createMobileAdminBtn(); <-- ELIMINADO PARA EVITAR SUPERPOSICIÓN
         }
         
-        // Indicador visual en menú móvil
         if(mobileProfile) mobileProfile.innerHTML = `<i class='bx bxs-user-circle' style='color:var(--primary)'></i><small style='color:var(--primary)'>${state.user.name.split(' ')[0]}</small>`;
 
     } else {

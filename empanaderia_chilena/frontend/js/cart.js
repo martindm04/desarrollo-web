@@ -12,7 +12,6 @@ export function initCart() {
     loadCartFromStorage();
     renderCart();
     
-    // EXPORTAR FUNCIONES
     window.addToCart = addToCart;
     window.adjustModalQty = adjustModalQty;
     window.confirmAdd = confirmAdd;

@@ -6,8 +6,8 @@ import { loadProducts } from './products.js';
 
 let isEditingId = null;
 let salesChartInstance = null;
-let currentOrders = []; // Almacenar órdenes para cambiar gráfico sin recargar API
-let currentChartType = 'status'; // 'status' o 'products'
+let currentOrders = [];
+let currentChartType = 'status';
 
 export function initAdmin() {
     window.toggleAdminPanel = toggleAdminPanel;
@@ -23,16 +23,12 @@ export function initAdmin() {
     window.setChartType = setChartType;
 }
 
-// --- LÓGICA DE GRÁFICOS ---
-
 function setChartType(type) {
     currentChartType = type;
     
-    // Actualizar botones
     document.querySelectorAll('.chart-toggle-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`btn-chart-${type}`).classList.add('active');
     
-    // Renderizar gráfico
     renderCurrentChart();
 }
 
@@ -41,14 +37,11 @@ async function loadSalesMetrics() {
     try {
         currentOrders = await api("/orders");
         
-        // Calcular total
         const totalRev = currentOrders.reduce((s, o) => s + o.total, 0);
         document.getElementById("kpi-total").innerText = `$${totalRev.toLocaleString('es-CL')}`;
         document.getElementById("kpi-count").innerText = currentOrders.length;
 
         renderAdminOrdersTable(currentOrders);
-        
-        // Renderizar gráfico con delay para asegurar canvas
         setTimeout(() => renderCurrentChart(), 100);
 
     } catch (e) { console.error("Error métricas:", e); }
@@ -87,7 +80,6 @@ function renderProductSalesChart(orders) {
     const ctx = getChartContext();
     if (!ctx) return;
 
-    // Agregar ventas por nombre de producto
     const salesByProduct = {};
     
     orders.forEach(order => {
@@ -97,10 +89,9 @@ function renderProductSalesChart(orders) {
         });
     });
 
-    // Ordenar de mayor a menor
     const sortedProducts = Object.entries(salesByProduct)
         .sort(([,a], [,b]) => b - a)
-        .slice(0, 10); // Top 10
+        .slice(0, 10);
 
     createChart(ctx, 'bar', {
         labels: sortedProducts.map(([name]) => name),
@@ -139,14 +130,12 @@ function createChart(ctx, type, data) {
     });
 }
 
-// --- RESTO DE FUNCIONES (Sin cambios lógicos mayores) ---
-
 async function openOrderHistory() {
     if (!state.user) return toast("Debes iniciar sesión", "error");
 
     try {
         const orders = await api(`/orders/user/${state.user.email}`);
-        state.orderHistory = orders; // Guardar para reorder
+        state.orderHistory = orders;
         
         const container = document.getElementById("history-list");
         const noHistory = document.getElementById("no-history");
@@ -157,13 +146,10 @@ async function openOrderHistory() {
             if (noHistory) noHistory.classList.remove("hidden");
         } else {
             if (noHistory) noHistory.classList.add("hidden");
-            
-            // Renderizado Inverso (Más reciente primero)
+
             orders.slice().reverse().forEach((o, index) => {
-                // Calcular índice real para reorder (porque invertimos el array visualmente)
                 const realIndex = orders.length - 1 - index;
                 
-                // Determinar paso activo (1-4)
                 let step = 1;
                 if (o.status === 'preparando') step = 2;
                 if (o.status === 'listo') step = 3;

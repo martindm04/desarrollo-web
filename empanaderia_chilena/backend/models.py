@@ -9,8 +9,8 @@ class Product(BaseModel):
     id: int
     name: str
     category: str
-    price: int = Field(..., gt=0)  # Precio debe ser mayor a 0
-    stock: int = Field(..., ge=0)  # Stock no puede ser negativo
+    price: int = Field(..., gt=0)
+    stock: int = Field(..., ge=0)
     image: str
 
 class OrderItem(BaseModel):
@@ -20,7 +20,7 @@ class OrderItem(BaseModel):
     quantity: int = Field(..., gt=0)
 
 class Order(BaseModel):
-    customer_email: EmailStr # Valida que sea un email real
+    customer_email: EmailStr
     items: List[OrderItem]
     total: int
     status: str = "recibido"

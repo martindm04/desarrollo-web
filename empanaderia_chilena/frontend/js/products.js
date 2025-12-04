@@ -10,7 +10,6 @@ export function initProducts() {
     renderSkeletons();
     loadProducts();
 
-    // Exponer funciones globales
     window.showFullCatalog = showFullCatalog;
     window.showHome = showHome;
     window.moveCarousel = moveCarousel;
@@ -18,8 +17,6 @@ export function initProducts() {
     window.toggleSearch = toggleSearch;
     window.handleSearch = handleSearch;
     window.filterSticky = filterSticky;
-    
-    // NUEVA FUNCIÓN PARA SCROLL DE CARRUSELES
     window.scrollShelf = scrollShelf;
 }
 
@@ -117,11 +114,9 @@ function renderHome() {
     });
 }
 
-// NUEVA FUNCIÓN DE SCROLL
 function scrollShelf(btn, direction) {
     const wrapper = btn.parentElement;
     const container = wrapper.querySelector('.shelf-container');
-    // Desplaza el ancho aproximado de una tarjeta y media
     const scrollAmount = 300; 
     container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
 }
@@ -162,7 +157,6 @@ function renderGrid(filterCat = 'all') {
     }
 }
 
-// --- CARRUSEL ---
 function initCarousel() {
     const track = document.getElementById("carousel-track");
     const container = document.getElementById("hero-carousel");

@@ -3,5 +3,5 @@ export const state = {
     token: null,
     products: [],
     cart: [],
-    orderHistory: [] // Nuevo campo para la función Re-order
+    orderHistory: []
 };
