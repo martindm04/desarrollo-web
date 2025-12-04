@@ -19,8 +19,7 @@ This project implements a Full-Stack web application for managing online orders 
 Navigate to the backend folder and install dependencies:
 
 ```bash
-cd backend
+cd .\empanaderia_chilena\backend\
 pip install fastapi uvicorn pymongo pydantic
-
-
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```

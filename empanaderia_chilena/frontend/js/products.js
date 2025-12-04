@@ -10,6 +10,7 @@ export function initProducts() {
     renderSkeletons();
     loadProducts();
 
+    // Exponer funciones globales
     window.showFullCatalog = showFullCatalog;
     window.showHome = showHome;
     window.moveCarousel = moveCarousel;
@@ -17,6 +18,9 @@ export function initProducts() {
     window.toggleSearch = toggleSearch;
     window.handleSearch = handleSearch;
     window.filterSticky = filterSticky;
+    
+    // NUEVA FUNCIÓN PARA SCROLL DE CARRUSELES
+    window.scrollShelf = scrollShelf;
 }
 
 export async function loadProducts() {
@@ -47,9 +51,6 @@ function createCardHTML(p) {
     }
 
     const hasStock = p.stock > 0;
-    
-    // --- CORRECCIÓN Ñ ---
-    // Reemplaza "ñ" por "n" para que coincida con el CSS
     const categoryClass = p.category.toLowerCase().replace(/ñ/g, 'n').replace(/\s+/g, '-');
 
     return `
@@ -102,13 +103,27 @@ function renderHome() {
                     <div class="category-title">${cat.title}</div>
                     <div class="view-all-link" onclick="showFullCatalog('${cat.id}')">Ver más</div>
                 </div>
-                <div class="shelf-container">
-                    ${products.map(p => createCardHTML(p)).join('')}
+                
+                <div class="shelf-wrapper">
+                    <button class="shelf-arrow prev" onclick="scrollShelf(this, -1)"><i class='bx bx-chevron-left'></i></button>
+                    <div class="shelf-container">
+                        ${products.map(p => createCardHTML(p)).join('')}
+                    </div>
+                    <button class="shelf-arrow next" onclick="scrollShelf(this, 1)"><i class='bx bx-chevron-right'></i></button>
                 </div>
             `;
             container.appendChild(section);
         }
     });
+}
+
+// NUEVA FUNCIÓN DE SCROLL
+function scrollShelf(btn, direction) {
+    const wrapper = btn.parentElement;
+    const container = wrapper.querySelector('.shelf-container');
+    // Desplaza el ancho aproximado de una tarjeta y media
+    const scrollAmount = 300; 
+    container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
 }
 
 function showFullCatalog(filterCat = 'all') {

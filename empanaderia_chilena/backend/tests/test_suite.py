@@ -1,134 +1,187 @@
+import sys
+import os
+
+# --- CORRECCIÓN DE ARQUITECTURA ---
+# Esto agrega el directorio padre ('backend') al sistema de rutas de Python
+# para que pueda encontrar 'main.py' y 'database.py' sin errores.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 from fastapi.testclient import TestClient
 from main import app
-from database import products_collection, users_collection
+from database import products_collection, users_collection, orders_collection
 import uuid
 
-# Creamos un cliente de prueba que simula ser un navegador
+# Inicializamos el cliente de pruebas
 client = TestClient(app)
 
-# --- FIXTURES (Datos de preparación) ---
+# --- UTILS PARA TESTS ---
+def generate_user(role="cliente"):
+    """Genera credenciales únicas para no chocar con la BD real"""
+    uid = str(uuid.uuid4())[:8]
+    email = f"admin_{uid}@test.cl" if role == "admin" else f"user_{uid}@test.cl"
+    return {
+        "name": f"Test {role.capitalize()} {uid}",
+        "email": email,
+        "password": "password123" # Cumple con min 8 chars
+    }
 
 @pytest.fixture
-def test_user():
-    """Crea un usuario único para cada prueba y devuelve sus credenciales"""
-    unique_id = str(uuid.uuid4())[:8]
-    user_data = {
-        "name": f"Test User {unique_id}",
-        "email": f"test_{unique_id}@qa.com",
-        "password": "password123", # Cumple min 8 chars
-        "role": "cliente"
-    }
-    # Registramos el usuario
-    response = client.post("/register", json=user_data)
-    assert response.status_code == 200
-    return user_data
+def admin_auth():
+    """Crea un admin y devuelve sus headers de autenticación"""
+    user_data = generate_user("admin")
+    # Registrar
+    client.post("/register", json=user_data)
+    # Loguear para obtener token
+    res = client.post("/login", json={"identifier": user_data["email"], "password": user_data["password"]})
+    return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 @pytest.fixture
-def test_product():
-    """Crea un producto de prueba en la BD"""
-    prod_id = 9999
-    product_data = {
-        "id": prod_id,
-        "name": "Empanada QA",
-        "category": "pruebas",
-        "price": 1000,
-        "stock": 10,
-        "image": "http://img.com/qa.jpg"
-    }
-    # Usamos upsert para asegurar que exista y tenga stock 10
-    products_collection.update_one(
-        {"id": prod_id}, 
-        {"$set": product_data}, 
-        upsert=True
-    )
-    return product_data
+def client_auth():
+    """Crea un cliente y devuelve sus headers + email"""
+    user_data = generate_user("cliente")
+    client.post("/register", json=user_data)
+    res = client.post("/login", json={"identifier": user_data["email"], "password": user_data["password"]})
+    return {"Authorization": f"Bearer {res.json()['access_token']}", "email": user_data["email"]}
 
-# --- TEST CASES (Pruebas) ---
+# --- TEST CASES ---
 
-def test_health_check():
-    """Verifica que la API esté viva"""
+def test_api_health():
+    """Verifica que la API responda"""
     res = client.get("/")
     assert res.status_code == 200
     assert "funcionando" in res.json()["message"]
 
-def test_auth_flow(test_user):
-    """Prueba el ciclo completo: Registro (en fixture) -> Login -> Token"""
-    # Intentamos loguearnos con el usuario creado
-    login_data = {
-        "identifier": test_user["email"],
-        "password": test_user["password"]
+def test_product_lifecycle_admin(admin_auth):
+    """
+    Prueba que un ADMIN puede: Crear -> Leer -> Actualizar -> Borrar un producto.
+    Y verifica que los cambios impacten la BD.
+    """
+    prod_id = 88888
+    new_product = {
+        "id": prod_id,
+        "name": "Empanada Test Integration",
+        "category": "horno",
+        "price": 1500,
+        "stock": 100,
+        "image": "/static/test.jpg"
     }
-    res = client.post("/login", json=login_data)
+
+    # 1. Crear (POST)
+    res_create = client.post("/products", json=new_product, headers=admin_auth)
+    assert res_create.status_code == 200
+
+    # 2. Leer (GET)
+    res_list = client.get("/products")
+    assert res_list.status_code == 200
+    products = res_list.json()
+    assert any(p["id"] == prod_id for p in products)
+
+    # 3. Actualizar (PUT)
+    update_data = new_product.copy()
+    update_data["price"] = 2000 # Subimos precio
+    res_update = client.put(f"/products/{prod_id}", json=update_data, headers=admin_auth)
+    assert res_update.status_code == 200
+
+    # Verificar cambio
+    res_get = client.get(f"/products/{prod_id}")
+    assert res_get.json()["price"] == 2000
+
+    # 4. Borrar (DELETE)
+    res_del = client.delete(f"/products/{prod_id}", headers=admin_auth)
+    assert res_del.status_code == 200
     
-    assert res.status_code == 200
-    data = res.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
+    # Verificar que ya no existe
+    assert client.get(f"/products/{prod_id}").status_code == 404
 
-def test_stock_deduction_logic(test_user, test_product):
+def test_full_purchase_flow(client_auth):
     """
-    Prueba crítica de negocio:
-    1. Loguearse
-    2. Comprar producto
-    3. Verificar que el stock bajó en la BD
+    Prueba el flujo crítico de negocio:
+    1. Existencia de producto
+    2. Cliente crea orden
+    3. Stock se descuenta
+    4. Orden aparece en historial
     """
-    # 1. Login
-    login_res = client.post("/login", json={"identifier": test_user["email"], "password": test_user["password"]})
-    token = login_res.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
+    prod_id = 77777
+    initial_stock = 50
+    buy_qty = 5
+    
+    # Aseguramos que el producto de prueba exista en la BD (Setup)
+    products_collection.update_one(
+        {"id": prod_id}, 
+        {"$set": {"name": "Stock Test", "price": 1000, "stock": initial_stock, "category": "pruebas", "image": "img"}}, 
+        upsert=True
+    )
 
-    # 2. Comprar 3 unidades
-    qty_to_buy = 3
+    # Crear la orden
     order_payload = {
-        "customer_email": test_user["email"],
+        "customer_email": client_auth["email"],
         "items": [
-            {
-                "product_id": test_product["id"],
-                "name": test_product["name"],
-                "price": test_product["price"],
-                "quantity": qty_to_buy
-            }
+            {"product_id": prod_id, "name": "Stock Test", "price": 1000, "quantity": buy_qty}
         ],
-        "total": test_product["price"] * qty_to_buy
+        "total": 5000
     }
-    
-    res_order = client.post("/orders", json=order_payload, headers=headers)
+
+    res_order = client.post("/orders", json=order_payload, headers=client_auth)
     assert res_order.status_code == 200
     assert res_order.json()["status"] == "confirmado"
 
-    # 3. Verificar Stock en Base de Datos (Sin pasar por la API)
-    updated_prod = products_collection.find_one({"id": test_product["id"]})
-    expected_stock = test_product["stock"] - qty_to_buy
-    
-    assert updated_prod["stock"] == expected_stock
-    print(f"\n✅ Stock verificado: Bajó de {test_product['stock']} a {updated_prod['stock']}")
+    # Verificación 1: Stock descontado en BD
+    updated_prod = products_collection.find_one({"id": prod_id})
+    assert updated_prod["stock"] == initial_stock - buy_qty
 
-def test_rate_limit_protection():
+    # Verificación 2: Aparece en historial del usuario
+    res_hist = client.get(f"/orders/user/{client_auth['email']}", headers=client_auth)
+    assert res_hist.status_code == 200
+    history = res_hist.json()
+    assert len(history) >= 1
+    # La última orden debe coincidir
+    assert history[-1]["total"] == 5000
+
+def test_admin_order_management(admin_auth, client_auth):
     """
-    Prueba de Seguridad:
-    Intenta loguearse muchas veces y verifica que el sistema bloquee (429).
+    Prueba que el ADMIN puede ver todas las órdenes y cambiar su estado.
     """
-    print("\n🛡️ Probando Fuerza Bruta (Rate Limit)...")
+    # Creamos una orden como cliente
+    prod_id = 77777
+    products_collection.update_one({"id": prod_id}, {"$set": {"stock": 100}}, upsert=True)
     
-    # Intentamos 7 veces (el límite configurado era 5/minuto)
-    # Nota: Usamos una IP falsa simulada en el header para no bloquear al usuario del test anterior
-    fake_ip_headers = {"X-Forwarded-For": "192.168.1.50"} 
+    order_payload = {
+        "customer_email": client_auth["email"],
+        "items": [{"product_id": prod_id, "name": "Test Status", "price": 100, "quantity": 1}],
+        "total": 100
+    }
+    create_res = client.post("/orders", json=order_payload, headers=client_auth)
+    order_id = create_res.json()["id"]
+
+    # Admin ve todas las órdenes
+    res_all = client.get("/orders", headers=admin_auth)
+    assert res_all.status_code == 200
+    # Verificamos que la nueva orden esté en la lista
+    assert any(o["id"] == order_id for o in res_all.json())
+
+    # Admin cambia estado a 'entregado'
+    res_status = client.patch(f"/orders/{order_id}/status", json={"status": "entregado"}, headers=admin_auth)
+    assert res_status.status_code == 200
+
+    # Cliente verifica que su orden ahora está 'entregado'
+    res_check = client.get(f"/orders/user/{client_auth['email']}", headers=client_auth)
+    my_order = next(o for o in res_check.json() if o["id"] == order_id)
+    assert my_order["status"] == "entregado"
+
+def test_security_rate_limit():
+    """
+    Verifica que el sistema bloquee intentos de fuerza bruta en el login.
+    """
+    # Simulamos una IP externa para no bloquear al localhost durante las pruebas
+    fake_ip = {"X-Forwarded-For": "10.0.0.99"} 
     
     limit_hit = False
-    for i in range(7):
-        res = client.post(
-            "/login", 
-            json={"identifier": "hacker@test.com", "password": "wrong"},
-            headers=fake_ip_headers
-        )
+    # El límite es 5/minuto, intentamos 7 veces
+    for _ in range(7):
+        res = client.post("/login", json={"identifier": "hacker", "password": "123"}, headers=fake_ip)
         if res.status_code == 429:
             limit_hit = True
             break
             
-    if limit_hit:
-        print("✅ Sistema de seguridad activo: Bloqueo detectado (429).")
-    else:
-        pytest.fail("❌ FALLO DE SEGURIDAD: El rate limit no se activó.")
-
     assert limit_hit == True
