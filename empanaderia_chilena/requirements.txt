@@ -2,7 +2,8 @@ fastapi
 uvicorn
 pymongo
 pydantic[email]
-passlib[bcrypt]
+passlib
+bcrypt==3.2.2
 pyjwt
 python-dotenv
 aiofiles
